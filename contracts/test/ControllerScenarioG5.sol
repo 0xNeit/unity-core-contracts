@@ -24,7 +24,7 @@ contract ControllerScenarioG5 is ControllerG5 {
         markets[address(vToken)].isListed = false;
     }
 
-    function setVenusSpeed(address vToken, uint venusSpeed) public {
-        venusSpeeds[vToken] = venusSpeed;
+    function setUcoreSpeed(address vToken, uint ucoreSpeed) public {
+        ucoreSpeeds[vToken] = ucoreSpeed;
     }
 }

@@ -9,7 +9,7 @@ import { IController, IVToken, IVBep20, IVCORE, IUAIController } from "./Interfa
 
 /**
  * @title Liquidator
- * @author Venus
+ * @author UnityCore
  * @notice The Liquidator contract is responsible for liquidating underwater accounts.
  */
 contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
@@ -17,7 +17,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IVCORE public immutable vCore;
 
-    /// @notice Address of Venus Unitroller contract.
+    /// @notice Address of Ucore Unitroller contract.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IController public immutable controller;
 
@@ -25,7 +25,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IUAIController public immutable uaiController;
 
-    /// @notice Address of Venus Treasury.
+    /// @notice Address of Ucore Treasury.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address public immutable treasury;
 
@@ -106,7 +106,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     /// @notice Constructor for the implementation contract. Sets immutable variables.
     /// @param controller_ The address of the Controller contract
     /// @param vCore_ The address of the VCORE
-    /// @param treasury_ The address of Venus treasury
+    /// @param treasury_ The address of Ucore treasury
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address controller_, address payable vCore_, address treasury_) {
         ensureNonzeroAddress(vCore_);

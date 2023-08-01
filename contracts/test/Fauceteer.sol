@@ -4,7 +4,7 @@ import "../Tokens/EIP20NonStandardInterface.sol";
 
 /**
  * @title Fauceteer
- * @author Venus
+ * @author UnityCore
  * @notice First computer program to be part of The Giving Pledge
  */
 contract Fauceteer {

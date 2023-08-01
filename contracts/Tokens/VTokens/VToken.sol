@@ -9,9 +9,9 @@ import "../../InterestRateModels/InterestRateModel.sol";
 import "./VTokenInterfaces.sol";
 
 /**
- * @title Venus's vToken Contract
+ * @title UnityCore's vToken Contract
  * @notice Abstract base for vTokens
- * @author Venus
+ * @author UnityCore
  */
 contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
     struct MintLocalVars {

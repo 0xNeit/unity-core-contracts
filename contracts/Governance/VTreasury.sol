@@ -6,8 +6,8 @@ import "../Utils/Ownable.sol";
 
 /**
  * @title VTreasury
- * @author Venus
- * @notice Protocol treasury that holds tokens owned by Venus
+ * @author UnityCore
+ * @notice Protocol treasury that holds tokens owned by Ucore
  */
 contract VTreasury is Ownable {
     using SafeMath for uint256;

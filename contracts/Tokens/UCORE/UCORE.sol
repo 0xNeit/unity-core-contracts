@@ -4,7 +4,7 @@ import "../../Utils/Tokenlock.sol";
 
 contract UCORE is Tokenlock {
     /// @notice BEP-20 token name for this token
-    string public constant name = "Venus";
+    string public constant name = "Unity Core Token";
 
     /// @notice BEP-20 token symbol for this token
     string public constant symbol = "UCORE";
@@ -13,7 +13,7 @@ contract UCORE is Tokenlock {
     uint8 public constant decimals = 18;
 
     /// @notice Total number of tokens in circulation
-    uint public constant totalSupply = 30000000e18; // 30 million UCORE
+    uint public constant totalSupply = 10000000e18; // 10 million UCORE
 
     /// @notice Allowance amounts on behalf of others
     mapping(address => mapping(address => uint96)) internal allowances;

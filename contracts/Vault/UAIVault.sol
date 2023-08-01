@@ -218,7 +218,7 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
         require(uaiVaultProxy._acceptImplementation() == 0, "change not authorized");
     }
 
-    function setVenusInfo(address _ucore, address _uai) external onlyAdmin {
+    function setUcoreInfo(address _ucore, address _uai) external onlyAdmin {
         require(_ucore != address(0) && _uai != address(0), "addresses must not be zero");
         require(address(ucore) == address(0) && address(uai) == address(0), "addresses already set");
         ucore = IBEP20(_ucore);

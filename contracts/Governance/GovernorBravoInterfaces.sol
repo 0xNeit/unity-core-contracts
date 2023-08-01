@@ -91,10 +91,10 @@ contract GovernorBravoDelegateStorageV1 is GovernorBravoDelegatorStorage {
     /// @notice The total number of proposals
     uint public proposalCount;
 
-    /// @notice The address of the Venus Protocol Timelock
+    /// @notice The address of the Ucore Protocol Timelock
     TimelockInterface public timelock;
 
-    /// @notice The address of the Venus governance token
+    /// @notice The address of the Ucore governance token
     UCoreVaultInterface public ucoreVault;
 
     /// @notice The official record of all proposals ever proposed

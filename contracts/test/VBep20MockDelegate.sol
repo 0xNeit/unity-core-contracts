@@ -3,9 +3,9 @@ pragma solidity ^0.5.16;
 import "../Tokens/VTokens/VToken.sol";
 
 /**
- * @title Venus's VBep20 Contract
+ * @title UnityCore's VBep20 Contract
  * @notice VTokens which wrap an EIP-20 underlying
- * @author Venus
+ * @author UnityCore
  */
 contract VBep20MockDelegate is VToken, VBep20Interface {
     address public implementation;

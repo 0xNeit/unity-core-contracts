@@ -65,7 +65,7 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
         /// @notice Per-market mapping of "accounts in this asset"
         mapping(address => bool) accountMembership;
         /// @notice Whether or not this market receives UCORE
-        bool isVenus;
+        bool isUcore;
     }
 
     /**
@@ -92,8 +92,8 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
     /// @notice Whether borrowing is paused (deprecated, superseded by actionPaused)
     mapping(address => bool) internal borrowGuardianPaused;
 
-    struct VenusMarketState {
-        /// @notice The market's last updated venusBorrowIndex or venusSupplyIndex
+    struct UcoreMarketState {
+        /// @notice The market's last updated ucoreBorrowIndex or ucoreSupplyIndex
         uint224 index;
         /// @notice The block number the index was last updated at
         uint32 block;
@@ -103,25 +103,25 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
     VToken[] public allMarkets;
 
     /// @notice The rate at which the flywheel distributes UCORE, per block
-    uint public venusRate;
+    uint public ucoreRate;
 
-    /// @notice The portion of venusRate that each market currently receives
-    mapping(address => uint) public venusSpeeds;
+    /// @notice The portion of ucoreRate that each market currently receives
+    mapping(address => uint) public ucoreSpeeds;
 
-    /// @notice The Venus market supply state for each market
-    mapping(address => VenusMarketState) public venusSupplyState;
+    /// @notice The Ucore market supply state for each market
+    mapping(address => UcoreMarketState) public ucoreSupplyState;
 
-    /// @notice The Venus market borrow state for each market
-    mapping(address => VenusMarketState) public venusBorrowState;
+    /// @notice The Ucore market borrow state for each market
+    mapping(address => UcoreMarketState) public ucoreBorrowState;
 
-    /// @notice The Venus supply index for each market for each supplier as of the last time they accrued UCORE
-    mapping(address => mapping(address => uint)) public venusSupplierIndex;
+    /// @notice The Ucore supply index for each market for each supplier as of the last time they accrued UCORE
+    mapping(address => mapping(address => uint)) public ucoreSupplierIndex;
 
-    /// @notice The Venus borrow index for each market for each borrower as of the last time they accrued UCORE
-    mapping(address => mapping(address => uint)) public venusBorrowerIndex;
+    /// @notice The Ucore borrow index for each market for each borrower as of the last time they accrued UCORE
+    mapping(address => mapping(address => uint)) public ucoreBorrowerIndex;
 
     /// @notice The UCORE accrued but not yet transferred to each user
-    mapping(address => uint) public venusAccrued;
+    mapping(address => uint) public ucoreAccrued;
 
     /// @notice The Address of UAIController
     UAIControllerInterface public uaiController;
@@ -144,12 +144,12 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
     bool public protocolPaused;
 
     /// @notice The rate at which the flywheel distributes UCORE to UAI Minters, per block (deprecated)
-    uint private venusUAIRate;
+    uint private ucoreUAIRate;
 }
 
 contract ControllerV2Storage is ControllerV1Storage {
     /// @notice The rate at which the flywheel distributes UCORE to UAI Vault, per block
-    uint public venusUAIVaultRate;
+    uint public ucoreUAIVaultRate;
 
     // address of UAI Vault
     address public uaiVaultAddress;
@@ -182,7 +182,7 @@ contract ControllerV4Storage is ControllerV3Storage {
 
 contract ControllerV5Storage is ControllerV4Storage {
     /// @notice The portion of UCORE that each contributor receives per block (deprecated)
-    mapping(address => uint) private venusContributorSpeeds;
+    mapping(address => uint) private ucoreContributorSpeeds;
 
     /// @notice Last block at which a contributor's UCORE rewards have been allocated (deprecated)
     mapping(address => uint) private lastContributorBlock;
@@ -222,11 +222,11 @@ contract ControllerV9Storage is ControllerV8Storage {
 }
 
 contract ControllerV10Storage is ControllerV9Storage {
-    /// @notice The rate at which venus is distributed to the corresponding borrow market (per block)
-    mapping(address => uint) public venusBorrowSpeeds;
+    /// @notice The rate at which ucore is distributed to the corresponding borrow market (per block)
+    mapping(address => uint) public ucoreBorrowSpeeds;
 
-    /// @notice The rate at which venus is distributed to the corresponding supply market (per block)
-    mapping(address => uint) public venusSupplySpeeds;
+    /// @notice The rate at which ucore is distributed to the corresponding supply market (per block)
+    mapping(address => uint) public ucoreSupplySpeeds;
 }
 
 contract ControllerV11Storage is ControllerV10Storage {

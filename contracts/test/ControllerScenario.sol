@@ -43,23 +43,23 @@ contract ControllerScenario is Controller {
         return blockNumber;
     }
 
-    function getVenusMarkets() public view returns (address[] memory) {
+    function getUcoreMarkets() public view returns (address[] memory) {
         uint m = allMarkets.length;
         uint n = 0;
         for (uint i = 0; i < m; i++) {
-            if (markets[address(allMarkets[i])].isVenus) {
+            if (markets[address(allMarkets[i])].isUcore) {
                 n++;
             }
         }
 
-        address[] memory venusMarkets = new address[](n);
+        address[] memory ucoreMarkets = new address[](n);
         uint k = 0;
         for (uint i = 0; i < m; i++) {
-            if (markets[address(allMarkets[i])].isVenus) {
-                venusMarkets[k++] = address(allMarkets[i]);
+            if (markets[address(allMarkets[i])].isUcore) {
+                ucoreMarkets[k++] = address(allMarkets[i]);
             }
         }
-        return venusMarkets;
+        return ucoreMarkets;
     }
 
     function unlist(VToken vToken) public {
@@ -69,21 +69,21 @@ contract ControllerScenario is Controller {
     /**
      * @notice Recalculate and update UCORE speeds for all UCORE markets
      */
-    function refreshVenusSpeeds() public {
+    function refreshUcoreSpeeds() public {
         VToken[] memory allMarkets_ = allMarkets;
 
         for (uint i = 0; i < allMarkets_.length; i++) {
             VToken vToken = allMarkets_[i];
             Exp memory borrowIndex = Exp({ mantissa: vToken.borrowIndex() });
-            updateVenusSupplyIndex(address(vToken));
-            updateVenusBorrowIndex(address(vToken), borrowIndex);
+            updateUcoreSupplyIndex(address(vToken));
+            updateUcoreBorrowIndex(address(vToken), borrowIndex);
         }
 
         Exp memory totalUtility = Exp({ mantissa: 0 });
         Exp[] memory utilities = new Exp[](allMarkets_.length);
         for (uint i = 0; i < allMarkets_.length; i++) {
             VToken vToken = allMarkets_[i];
-            if (venusSpeeds[address(vToken)] > 0) {
+            if (ucoreSpeeds[address(vToken)] > 0) {
                 Exp memory assetPrice = Exp({ mantissa: oracle.getUnderlyingPrice(vToken) });
                 Exp memory utility = mul_(assetPrice, vToken.totalBorrows());
                 utilities[i] = utility;
@@ -93,8 +93,8 @@ contract ControllerScenario is Controller {
 
         for (uint i = 0; i < allMarkets_.length; i++) {
             VToken vToken = allMarkets[i];
-            uint newSpeed = totalUtility.mantissa > 0 ? mul_(venusRate, div_(utilities[i], totalUtility)) : 0;
-            setVenusSpeedInternal(vToken, newSpeed, newSpeed);
+            uint newSpeed = totalUtility.mantissa > 0 ? mul_(ucoreRate, div_(utilities[i], totalUtility)) : 0;
+            setUcoreSpeedInternal(vToken, newSpeed, newSpeed);
         }
     }
 }

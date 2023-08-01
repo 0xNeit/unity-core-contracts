@@ -17,11 +17,11 @@ contract UAIControllerInterface {
         VTokenInterface vTokenCollateral
     ) external returns (uint, uint);
 
-    function _initializeVenusUAIState(uint blockNumber) external returns (uint);
+    function _initializeUcoreUAIState(uint blockNumber) external returns (uint);
 
-    function updateVenusUAIMintIndex() external returns (uint);
+    function updateUcoreUAIMintIndex() external returns (uint);
 
-    function calcDistributeUAIMinterVenus(address uaiMinter) external returns (uint, uint, uint, uint);
+    function calcDistributeUAIMinterUcore(address uaiMinter) external returns (uint, uint, uint, uint);
 
     function getUAIRepayAmount(address account) public view returns (uint);
 }

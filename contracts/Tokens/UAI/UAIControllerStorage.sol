@@ -27,21 +27,21 @@ contract UAIUnitrollerAdminStorage {
 contract UAIControllerStorageG1 is UAIUnitrollerAdminStorage {
     Controller public controller;
 
-    struct VenusUAIState {
-        /// @notice The last updated venusUAIMintIndex
+    struct UcoreUAIState {
+        /// @notice The last updated ucoreUAIMintIndex
         uint224 index;
         /// @notice The block number the index was last updated at
         uint32 block;
     }
 
-    /// @notice The Venus UAI state
-    VenusUAIState public venusUAIState;
+    /// @notice The Ucore UAI state
+    UcoreUAIState public ucoreUAIState;
 
-    /// @notice The Venus UAI state initialized
-    bool public isVenusUAIInitialized;
+    /// @notice The Ucore UAI state initialized
+    bool public isUcoreUAIInitialized;
 
-    /// @notice The Venus UAI minter index as of the last time they accrued UCORE
-    mapping(address => uint) public venusUAIMinterIndex;
+    /// @notice The Ucore UAI minter index as of the last time they accrued UCORE
+    mapping(address => uint) public ucoreUAIMinterIndex;
 }
 
 contract UAIControllerStorageG2 is UAIControllerStorageG1 {

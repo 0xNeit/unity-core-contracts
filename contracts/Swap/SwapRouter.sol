@@ -12,7 +12,7 @@ import "./interfaces/IVtoken.sol";
 import "./interfaces/InterfaceController.sol";
 
 /**
- * @title Venus's Pancake Swap Integration Contract
+ * @title UnityCore's Pancake Swap Integration Contract
  * @notice This contracts allows users to swap a token for another one and supply/repay with the latter.
  * @dev For all functions that do not swap native CORE, user must approve this contract with the amount, prior the calling the swap function.
  * @author 0xlucian
@@ -115,7 +115,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap token A for token B and supply to a Venus market
+     * @notice Swap token A for token B and supply to a Ucore market
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -139,7 +139,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap deflationary (a small amount of fee is deducted at the time of transfer of token) token A for token B and supply to a Venus market.
+     * @notice Swap deflationary (a small amount of fee is deducted at the time of transfer of token) token A for token B and supply to a Ucore market.
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -163,7 +163,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap CORE for another token and supply to a Venus market
+     * @notice Swap CORE for another token and supply to a Ucore market
      * @dev The amount to be swapped is obtained from the msg.value, since we are swapping CORE
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -187,7 +187,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap CORE for another deflationary token (a small amount of fee is deducted at the time of transfer of token) and supply to a Venus market
+     * @notice Swap CORE for another deflationary token (a small amount of fee is deducted at the time of transfer of token) and supply to a Ucore market
      * @dev The amount to be swapped is obtained from the msg.value, since we are swapping CORE
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -211,7 +211,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap tokens for Exact tokens and supply to a Venus market
+     * @notice Swap tokens for Exact tokens and supply to a Ucore market
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param amountInMax The maximum amount of input tokens that can be taken for the transaction not to revert.
@@ -236,7 +236,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap CORE for Exact tokens and supply to a Venus market
+     * @notice Swap CORE for Exact tokens and supply to a Ucore market
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -259,7 +259,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap Exact tokens for CORE and supply to a Venus market
+     * @notice Swap Exact tokens for CORE and supply to a Ucore market
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -281,7 +281,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap Exact deflationary tokens (a small amount of fee is deducted at the time of transfer of tokens) for CORE and supply to a Venus market
+     * @notice Swap Exact deflationary tokens (a small amount of fee is deducted at the time of transfer of tokens) for CORE and supply to a Ucore market
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -306,7 +306,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap tokens for Exact CORE and supply to a Venus market
+     * @notice Swap tokens for Exact CORE and supply to a Ucore market
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param amountInMax The maximum amount of input tokens that can be taken for the transaction not to revert.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -328,7 +328,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap token A for token B and repay a borrow from a Venus market
+     * @notice Swap token A for token B and repay a borrow from a Ucore market
      * @param vTokenAddress The address of the vToken contract to repay.
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -352,7 +352,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap deflationary token (a small amount of fee is deducted at the time of transfer of token) token A for token B and repay a borrow from a Venus market
+     * @notice Swap deflationary token (a small amount of fee is deducted at the time of transfer of token) token A for token B and repay a borrow from a Ucore market
      * @param vTokenAddress The address of the vToken contract to repay.
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -376,7 +376,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap CORE for another token and repay a borrow from a Venus market
+     * @notice Swap CORE for another token and repay a borrow from a Ucore market
      * @dev The amount to be swapped is obtained from the msg.value, since we are swapping CORE
      * @param vTokenAddress The address of the vToken contract to repay.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -399,7 +399,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap CORE for another deflationary token (a small amount of fee is deducted at the time of transfer of token) and repay a borrow from a Venus market
+     * @notice Swap CORE for another deflationary token (a small amount of fee is deducted at the time of transfer of token) and repay a borrow from a Ucore market
      * @dev The amount to be swapped is obtained from the msg.value, since we are swapping CORE
      * @param vTokenAddress The address of the vToken contract to repay.
      * @param amountOutMin Minimum amount of tokens to receive.
@@ -422,7 +422,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap tokens for Exact tokens and repay to a Venus market
+     * @notice Swap tokens for Exact tokens and repay to a Ucore market
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param amountInMax The maximum amount of input tokens that can be taken for the transaction not to revert.
@@ -447,7 +447,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap tokens for full tokens debt and repay to a Venus market
+     * @notice Swap tokens for full tokens debt and repay to a Ucore market
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountInMax The maximum amount of input tokens that can be taken for the transaction not to revert.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -471,7 +471,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap CORE for Exact tokens and repay to a Venus market
+     * @notice Swap CORE for Exact tokens and repay to a Ucore market
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -494,7 +494,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap CORE for Exact tokens and repay to a Venus market
+     * @notice Swap CORE for Exact tokens and repay to a Ucore market
      * @param vTokenAddress The address of the vToken contract for supplying assets.
      * @param path Array with addresses of the underlying assets to be swapped
      * @param deadline Unix timestamp after which the transaction will revert.
@@ -516,7 +516,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap Exact tokens for CORE and repay to a Venus market
+     * @notice Swap Exact tokens for CORE and repay to a Ucore market
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -538,7 +538,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap Exact deflationary tokens (a small amount of fee is deducted at the time of transfer of tokens) for CORE and repay to a Venus market
+     * @notice Swap Exact deflationary tokens (a small amount of fee is deducted at the time of transfer of tokens) for CORE and repay to a Ucore market
      * @param amountIn The amount of tokens to swap.
      * @param amountOutMin Minimum amount of tokens to receive.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -563,7 +563,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap tokens for Exact CORE and repay to a Venus market
+     * @notice Swap tokens for Exact CORE and repay to a Ucore market
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param amountInMax The maximum amount of input tokens that can be taken for the transaction not to revert.
      * @param path Array with addresses of the underlying assets to be swapped
@@ -585,7 +585,7 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Swap tokens for Exact CORE and repay to a Venus market
+     * @notice Swap tokens for Exact CORE and repay to a Ucore market
      * @param amountInMax The maximum amount of input tokens that can be taken for the transaction not to revert.
      * @param path Array with addresses of the underlying assets to be swapped
      * @param deadline Unix timestamp after which the transaction will revert.
@@ -851,10 +851,10 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Supply token to a Venus market
+     * @notice Supply token to a Ucore market
      * @param path The addresses of the underlying token
      * @param vTokenAddress The address of the vToken contract for supplying assets.
-     * @param swapAmount The amount of tokens supply to Venus Market.
+     * @param swapAmount The amount of tokens supply to Ucore Market.
      */
     function _supply(address path, address vTokenAddress, uint256 swapAmount) internal {
         TransferHelper.safeApprove(path, vTokenAddress, 0);
@@ -866,10 +866,10 @@ contract SwapRouter is Ownable2Step, RouterHelper, IPancakeSwapV2Router {
     }
 
     /**
-     * @notice Repay a borrow from Venus market
+     * @notice Repay a borrow from Ucore market
      * @param path The addresses of the underlying token
      * @param vTokenAddress The address of the vToken contract for supplying assets.
-     * @param swapAmount The amount of tokens repay to Venus Market.
+     * @param swapAmount The amount of tokens repay to Ucore Market.
      */
     function _repay(address path, address vTokenAddress, uint256 swapAmount) internal {
         TransferHelper.safeApprove(path, vTokenAddress, 0);

@@ -12,8 +12,8 @@ import "./ControllerStorage.sol";
 import "./Unitroller.sol";
 
 /**
- * @title Venus's Controller Contract
- * @author Venus
+ * @title UnityCore's Controller Contract
+ * @author UnityCore
  */
 contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
@@ -46,33 +46,33 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
     /// @notice Emitted when an action is paused on a market
     event ActionPausedMarket(VToken indexed vToken, Action indexed action, bool pauseState);
 
-    /// @notice Emitted when Venus UAI Vault rate is changed
-    event NewVenusUAIVaultRate(uint oldVenusUAIVaultRate, uint newVenusUAIVaultRate);
+    /// @notice Emitted when Ucore UAI Vault rate is changed
+    event NewUcoreUAIVaultRate(uint oldUcoreUAIVaultRate, uint newUcoreUAIVaultRate);
 
     /// @notice Emitted when a new borrow-side UCORE speed is calculated for a market
-    event VenusBorrowSpeedUpdated(VToken indexed vToken, uint newSpeed);
+    event UcoreBorrowSpeedUpdated(VToken indexed vToken, uint newSpeed);
 
     /// @notice Emitted when a new supply-side UCORE speed is calculated for a market
-    event VenusSupplySpeedUpdated(VToken indexed vToken, uint newSpeed);
+    event UcoreSupplySpeedUpdated(VToken indexed vToken, uint newSpeed);
 
     /// @notice Emitted when UCORE is distributed to a supplier
-    event DistributedSupplierVenus(
+    event DistributedSupplierUcore(
         VToken indexed vToken,
         address indexed supplier,
-        uint venusDelta,
-        uint venusSupplyIndex
+        uint ucoreDelta,
+        uint ucoreSupplyIndex
     );
 
     /// @notice Emitted when UCORE is distributed to a borrower
-    event DistributedBorrowerVenus(
+    event DistributedBorrowerUcore(
         VToken indexed vToken,
         address indexed borrower,
-        uint venusDelta,
-        uint venusBorrowIndex
+        uint ucoreDelta,
+        uint ucoreBorrowIndex
     );
 
     /// @notice Emitted when UCORE is distributed to UAI Vault
-    event DistributedUAIVaultVenus(uint amount);
+    event DistributedUAIVaultUcore(uint amount);
 
     /// @notice Emitted when UAIController is changed
     event NewUAIController(UAIControllerInterface oldUAIController, UAIControllerInterface newUAIController);
@@ -98,8 +98,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
     // @notice Emitted when liquidator adress is changed
     event NewLiquidatorContract(address oldLiquidatorContract, address newLiquidatorContract);
 
-    /// @notice Emitted when Venus is granted by admin
-    event VenusGranted(address recipient, uint amount);
+    /// @notice Emitted when Ucore is granted by admin
+    event UcoreGranted(address recipient, uint amount);
 
     /// @notice Emitted whe ControllerLens address is changed
     event NewControllerLens(address oldControllerLens, address newControllerLens);
@@ -113,8 +113,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
     /// @notice Emitted when the borrowing delegate rights are updated for an account
     event DelegateUpdated(address borrower, address delegate, bool allowDelegatedBorrows);
 
-    /// @notice The initial Venus index for a market
-    uint224 public constant venusInitialIndex = 1e36;
+    /// @notice The initial Ucore index for a market
+    uint224 public constant ucoreInitialIndex = 1e36;
 
     // closeFactorMantissa must be strictly greater than this value
     uint internal constant closeFactorMinMantissa = 0.05e18; // 0.05
@@ -328,8 +328,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         require(nextTotalSupply <= supplyCap, "market supply cap reached");
 
         // Keep the flywheel moving
-        updateVenusSupplyIndex(vToken);
-        distributeSupplierVenus(vToken, minter);
+        updateUcoreSupplyIndex(vToken);
+        distributeSupplierUcore(vToken, minter);
 
         return uint(Error.NO_ERROR);
     }
@@ -360,8 +360,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         }
 
         // Keep the flywheel moving
-        updateVenusSupplyIndex(vToken);
-        distributeSupplierVenus(vToken, redeemer);
+        updateUcoreSupplyIndex(vToken);
+        distributeSupplierUcore(vToken, redeemer);
 
         return uint(Error.NO_ERROR);
     }
@@ -454,8 +454,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
 
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({ mantissa: VToken(vToken).borrowIndex() });
-        updateVenusBorrowIndex(vToken, borrowIndex);
-        distributeBorrowerVenus(vToken, borrower, borrowIndex);
+        updateUcoreBorrowIndex(vToken, borrowIndex);
+        distributeBorrowerUcore(vToken, borrower, borrowIndex);
 
         return uint(Error.NO_ERROR);
     }
@@ -490,8 +490,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
 
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({ mantissa: VToken(vToken).borrowIndex() });
-        updateVenusBorrowIndex(vToken, borrowIndex);
-        distributeBorrowerVenus(vToken, borrower, borrowIndex);
+        updateUcoreBorrowIndex(vToken, borrowIndex);
+        distributeBorrowerUcore(vToken, borrower, borrowIndex);
 
         return uint(Error.NO_ERROR);
     }
@@ -612,9 +612,9 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         }
 
         // Keep the flywheel moving
-        updateVenusSupplyIndex(vTokenCollateral);
-        distributeSupplierVenus(vTokenCollateral, borrower);
-        distributeSupplierVenus(vTokenCollateral, liquidator);
+        updateUcoreSupplyIndex(vTokenCollateral);
+        distributeSupplierUcore(vTokenCollateral, borrower);
+        distributeSupplierUcore(vTokenCollateral, liquidator);
 
         return uint(Error.NO_ERROR);
     }
@@ -656,9 +656,9 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         }
 
         // Keep the flywheel moving
-        updateVenusSupplyIndex(vToken);
-        distributeSupplierVenus(vToken, src);
-        distributeSupplierVenus(vToken, dst);
+        updateUcoreSupplyIndex(vToken);
+        distributeSupplierUcore(vToken, src);
+        distributeSupplierUcore(vToken, dst);
 
         return uint(Error.NO_ERROR);
     }
@@ -922,8 +922,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
 
         vToken.isVToken(); // Sanity check to make sure its really a VToken
 
-        // Note that isVenus is not in active use anymore
-        markets[address(vToken)] = Market({ isListed: true, isVenus: false, collateralFactorMantissa: 0 });
+        // Note that isUcore is not in active use anymore
+        markets[address(vToken)] = Market({ isListed: true, isUcore: false, collateralFactorMantissa: 0 });
 
         _addMarketInternal(vToken);
         _initializeMarket(address(vToken));
@@ -943,20 +943,20 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
     function _initializeMarket(address vToken) internal {
         uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
 
-        VenusMarketState storage supplyState = venusSupplyState[vToken];
-        VenusMarketState storage borrowState = venusBorrowState[vToken];
+        UcoreMarketState storage supplyState = ucoreSupplyState[vToken];
+        UcoreMarketState storage borrowState = ucoreBorrowState[vToken];
 
         /*
          * Update market state indices
          */
         if (supplyState.index == 0) {
             // Initialize supply state index with default value
-            supplyState.index = venusInitialIndex;
+            supplyState.index = ucoreInitialIndex;
         }
 
         if (borrowState.index == 0) {
             // Initialize borrow state index with default value
-            borrowState.index = venusInitialIndex;
+            borrowState.index = ucoreInitialIndex;
         }
 
         /*
@@ -1126,32 +1126,32 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         require(unitroller._acceptImplementation() == 0, "not authorized");
     }
 
-    /*** Venus Distribution ***/
+    /*** Ucore Distribution ***/
 
-    function setVenusSpeedInternal(VToken vToken, uint supplySpeed, uint borrowSpeed) internal {
+    function setUcoreSpeedInternal(VToken vToken, uint supplySpeed, uint borrowSpeed) internal {
         ensureListed(markets[address(vToken)]);
 
-        if (venusSupplySpeeds[address(vToken)] != supplySpeed) {
+        if (ucoreSupplySpeeds[address(vToken)] != supplySpeed) {
             // Supply speed updated so let's update supply state to ensure that
             //  1. UCORE accrued properly for the old speed, and
             //  2. UCORE accrued at the new speed starts after this block.
 
-            updateVenusSupplyIndex(address(vToken));
+            updateUcoreSupplyIndex(address(vToken));
             // Update speed and emit event
-            venusSupplySpeeds[address(vToken)] = supplySpeed;
-            emit VenusSupplySpeedUpdated(vToken, supplySpeed);
+            ucoreSupplySpeeds[address(vToken)] = supplySpeed;
+            emit UcoreSupplySpeedUpdated(vToken, supplySpeed);
         }
 
-        if (venusBorrowSpeeds[address(vToken)] != borrowSpeed) {
+        if (ucoreBorrowSpeeds[address(vToken)] != borrowSpeed) {
             // Borrow speed updated so let's update borrow state to ensure that
             //  1. UCORE accrued properly for the old speed, and
             //  2. UCORE accrued at the new speed starts after this block.
             Exp memory borrowIndex = Exp({ mantissa: vToken.borrowIndex() });
-            updateVenusBorrowIndex(address(vToken), borrowIndex);
+            updateUcoreBorrowIndex(address(vToken), borrowIndex);
 
             // Update speed and emit event
-            venusBorrowSpeeds[address(vToken)] = borrowSpeed;
-            emit VenusBorrowSpeedUpdated(vToken, borrowSpeed);
+            ucoreBorrowSpeeds[address(vToken)] = borrowSpeed;
+            emit UcoreBorrowSpeedUpdated(vToken, borrowSpeed);
         }
     }
 
@@ -1172,15 +1172,15 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @notice Accrue UCORE to the market by updating the supply index
      * @param vToken The market whose supply index to update
      */
-    function updateVenusSupplyIndex(address vToken) internal {
-        VenusMarketState storage supplyState = venusSupplyState[vToken];
-        uint supplySpeed = venusSupplySpeeds[vToken];
+    function updateUcoreSupplyIndex(address vToken) internal {
+        UcoreMarketState storage supplyState = ucoreSupplyState[vToken];
+        uint supplySpeed = ucoreSupplySpeeds[vToken];
         uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
         uint deltaBlocks = sub_(uint(blockNumber), uint(supplyState.block));
         if (deltaBlocks > 0 && supplySpeed > 0) {
             uint supplyTokens = VToken(vToken).totalSupply();
-            uint venusAccrued = mul_(deltaBlocks, supplySpeed);
-            Double memory ratio = supplyTokens > 0 ? fraction(venusAccrued, supplyTokens) : Double({ mantissa: 0 });
+            uint ucoreAccrued = mul_(deltaBlocks, supplySpeed);
+            Double memory ratio = supplyTokens > 0 ? fraction(ucoreAccrued, supplyTokens) : Double({ mantissa: 0 });
             supplyState.index = safe224(
                 add_(Double({ mantissa: supplyState.index }), ratio).mantissa,
                 "new index exceeds 224 bits"
@@ -1195,15 +1195,15 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @notice Accrue UCORE to the market by updating the borrow index
      * @param vToken The market whose borrow index to update
      */
-    function updateVenusBorrowIndex(address vToken, Exp memory marketBorrowIndex) internal {
-        VenusMarketState storage borrowState = venusBorrowState[vToken];
-        uint borrowSpeed = venusBorrowSpeeds[vToken];
+    function updateUcoreBorrowIndex(address vToken, Exp memory marketBorrowIndex) internal {
+        UcoreMarketState storage borrowState = ucoreBorrowState[vToken];
+        uint borrowSpeed = ucoreBorrowSpeeds[vToken];
         uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
         uint deltaBlocks = sub_(uint(blockNumber), uint(borrowState.block));
         if (deltaBlocks > 0 && borrowSpeed > 0) {
             uint borrowAmount = div_(VToken(vToken).totalBorrows(), marketBorrowIndex);
-            uint venusAccrued = mul_(deltaBlocks, borrowSpeed);
-            Double memory ratio = borrowAmount > 0 ? fraction(venusAccrued, borrowAmount) : Double({ mantissa: 0 });
+            uint ucoreAccrued = mul_(deltaBlocks, borrowSpeed);
+            Double memory ratio = borrowAmount > 0 ? fraction(ucoreAccrued, borrowAmount) : Double({ mantissa: 0 });
             borrowState.index = safe224(
                 add_(Double({ mantissa: borrowState.index }), ratio).mantissa,
                 "new index exceeds 224 bits"
@@ -1219,22 +1219,22 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @param vToken The market in which the supplier is interacting
      * @param supplier The address of the supplier to distribute UCORE to
      */
-    function distributeSupplierVenus(address vToken, address supplier) internal {
+    function distributeSupplierUcore(address vToken, address supplier) internal {
         if (address(uaiVaultAddress) != address(0)) {
             releaseToVault();
         }
 
-        uint supplyIndex = venusSupplyState[vToken].index;
-        uint supplierIndex = venusSupplierIndex[vToken][supplier];
+        uint supplyIndex = ucoreSupplyState[vToken].index;
+        uint supplierIndex = ucoreSupplierIndex[vToken][supplier];
 
         // Update supplier's index to the current index since we are distributing accrued UCORE
-        venusSupplierIndex[vToken][supplier] = supplyIndex;
+        ucoreSupplierIndex[vToken][supplier] = supplyIndex;
 
-        if (supplierIndex == 0 && supplyIndex >= venusInitialIndex) {
+        if (supplierIndex == 0 && supplyIndex >= ucoreInitialIndex) {
             // Covers the case where users supplied tokens before the market's supply state index was set.
             // Rewards the user with UCORE accrued from the start of when supplier rewards were first
             // set for the market.
-            supplierIndex = venusInitialIndex;
+            supplierIndex = ucoreInitialIndex;
         }
 
         // Calculate change in the cumulative sum of the UCORE per vToken accrued
@@ -1244,9 +1244,9 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         uint supplierDelta = mul_(VToken(vToken).balanceOf(supplier), deltaIndex);
 
         // Addition of supplierAccrued and supplierDelta
-        venusAccrued[supplier] = add_(venusAccrued[supplier], supplierDelta);
+        ucoreAccrued[supplier] = add_(ucoreAccrued[supplier], supplierDelta);
 
-        emit DistributedSupplierVenus(VToken(vToken), supplier, supplierDelta, supplyIndex);
+        emit DistributedSupplierUcore(VToken(vToken), supplier, supplierDelta, supplyIndex);
     }
 
     /**
@@ -1255,22 +1255,22 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @param vToken The market in which the borrower is interacting
      * @param borrower The address of the borrower to distribute UCORE to
      */
-    function distributeBorrowerVenus(address vToken, address borrower, Exp memory marketBorrowIndex) internal {
+    function distributeBorrowerUcore(address vToken, address borrower, Exp memory marketBorrowIndex) internal {
         if (address(uaiVaultAddress) != address(0)) {
             releaseToVault();
         }
 
-        uint borrowIndex = venusBorrowState[vToken].index;
-        uint borrowerIndex = venusBorrowerIndex[vToken][borrower];
+        uint borrowIndex = ucoreBorrowState[vToken].index;
+        uint borrowerIndex = ucoreBorrowerIndex[vToken][borrower];
 
         // Update borrowers's index to the current index since we are distributing accrued UCORE
-        venusBorrowerIndex[vToken][borrower] = borrowIndex;
+        ucoreBorrowerIndex[vToken][borrower] = borrowIndex;
 
-        if (borrowerIndex == 0 && borrowIndex >= venusInitialIndex) {
+        if (borrowerIndex == 0 && borrowIndex >= ucoreInitialIndex) {
             // Covers the case where users borrowed tokens before the market's borrow state index was set.
             // Rewards the user with UCORE accrued from the start of when borrower rewards were first
             // set for the market.
-            borrowerIndex = venusInitialIndex;
+            borrowerIndex = ucoreInitialIndex;
         }
 
         // Calculate change in the cumulative sum of the UCORE per borrowed unit accrued
@@ -1278,17 +1278,17 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
 
         uint borrowerDelta = mul_(div_(VToken(vToken).borrowBalanceStored(borrower), marketBorrowIndex), deltaIndex);
 
-        venusAccrued[borrower] = add_(venusAccrued[borrower], borrowerDelta);
+        ucoreAccrued[borrower] = add_(ucoreAccrued[borrower], borrowerDelta);
 
-        emit DistributedBorrowerVenus(VToken(vToken), borrower, borrowerDelta, borrowIndex);
+        emit DistributedBorrowerUcore(VToken(vToken), borrower, borrowerDelta, borrowIndex);
     }
 
     /**
      * @notice Claim all the ucore accrued by holder in all markets and UAI
      * @param holder The address to claim UCORE for
      */
-    function claimVenus(address holder) public {
-        return claimVenus(holder, allMarkets);
+    function claimUcore(address holder) public {
+        return claimUcore(holder, allMarkets);
     }
 
     /**
@@ -1296,10 +1296,10 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @param holder The address to claim UCORE for
      * @param vTokens The list of markets to claim UCORE in
      */
-    function claimVenus(address holder, VToken[] memory vTokens) public {
+    function claimUcore(address holder, VToken[] memory vTokens) public {
         address[] memory holders = new address[](1);
         holders[0] = holder;
-        claimVenus(holders, vTokens, true, true);
+        claimUcore(holders, vTokens, true, true);
     }
 
     /**
@@ -1309,8 +1309,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @param borrowers Whether or not to claim UCORE earned by borrowing
      * @param suppliers Whether or not to claim UCORE earned by supplying
      */
-    function claimVenus(address[] memory holders, VToken[] memory vTokens, bool borrowers, bool suppliers) public {
-        claimVenus(holders, vTokens, borrowers, suppliers, false);
+    function claimUcore(address[] memory holders, VToken[] memory vTokens, bool borrowers, bool suppliers) public {
+        claimUcore(holders, vTokens, borrowers, suppliers, false);
     }
 
     /**
@@ -1321,7 +1321,7 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @param suppliers Whether or not to claim UCORE earned by supplying
      * @param collateral Whether or not to use UCORE earned as collateral, only takes effect when the holder has a shortfall
      */
-    function claimVenus(
+    function claimUcore(
         address[] memory holders,
         VToken[] memory vTokens,
         bool borrowers,
@@ -1335,15 +1335,15 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
             ensureListed(markets[address(vToken)]);
             if (borrowers) {
                 Exp memory borrowIndex = Exp({ mantissa: vToken.borrowIndex() });
-                updateVenusBorrowIndex(address(vToken), borrowIndex);
+                updateUcoreBorrowIndex(address(vToken), borrowIndex);
                 for (j = 0; j < holdersLength; ++j) {
-                    distributeBorrowerVenus(address(vToken), holders[j], borrowIndex);
+                    distributeBorrowerUcore(address(vToken), holders[j], borrowIndex);
                 }
             }
             if (suppliers) {
-                updateVenusSupplyIndex(address(vToken));
+                updateUcoreSupplyIndex(address(vToken));
                 for (j = 0; j < holdersLength; ++j) {
-                    distributeSupplierVenus(address(vToken), holders[j]);
+                    distributeSupplierUcore(address(vToken), holders[j]);
                 }
             }
         }
@@ -1353,18 +1353,18 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
             // If there is a positive shortfall, the UCORE reward is accrued,
             // but won't be granted to this holder
             (, , uint shortfall) = getHypotheticalAccountLiquidityInternal(holder, VToken(0), 0, 0);
-            venusAccrued[holder] = grantUCOREInternal(holder, venusAccrued[holder], shortfall, collateral);
+            ucoreAccrued[holder] = grantUCOREInternal(holder, ucoreAccrued[holder], shortfall, collateral);
         }
     }
 
     /**
-     * @notice Claim all the ucore accrued by holder in all markets, a shorthand for `claimVenus` with collateral set to `true`
+     * @notice Claim all the ucore accrued by holder in all markets, a shorthand for `claimUcore` with collateral set to `true`
      * @param holder The address to claim UCORE for
      */
-    function claimVenusAsCollateral(address holder) external {
+    function claimUcoreAsCollateral(address holder) external {
         address[] memory holders = new address[](1);
         holders[0] = holder;
-        claimVenus(holders, allMarkets, true, true, true);
+        claimUcore(holders, allMarkets, true, true, true);
     }
 
     /**
@@ -1373,7 +1373,7 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @param user The address of the user to transfer UCORE to
      * @param amount The amount of UCORE to (possibly) transfer
      * @param shortfall The shortfall of the user
-     * @param collateral Whether or not we will use user's venus reward as collateral to pay off the debt
+     * @param collateral Whether or not we will use user's ucore reward as collateral to pay off the debt
      * @return The amount of UCORE which was NOT transferred to the user
      */
     function grantUCOREInternal(address user, uint amount, uint shortfall, bool collateral) internal returns (uint) {
@@ -1409,11 +1409,11 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
             "mint behalf error during collateralize ucore"
         );
 
-        // set venusAccrue[user] to 0
+        // set ucoreAccrue[user] to 0
         return 0;
     }
 
-    /*** Venus Distribution Admin ***/
+    /*** Ucore Distribution Admin ***/
 
     /**
      * @notice Transfer UCORE to the recipient
@@ -1425,19 +1425,19 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         ensureAdminOr(controllerImplementation);
         uint amountLeft = grantUCOREInternal(recipient, amount, 0, false);
         require(amountLeft == 0, "insufficient ucore for grant");
-        emit VenusGranted(recipient, amount);
+        emit UcoreGranted(recipient, amount);
     }
 
     /**
      * @notice Set the amount of UCORE distributed per block to UAI Vault
-     * @param venusUAIVaultRate_ The amount of UCORE wei per block to distribute to UAI Vault
+     * @param ucoreUAIVaultRate_ The amount of UCORE wei per block to distribute to UAI Vault
      */
-    function _setVenusUAIVaultRate(uint venusUAIVaultRate_) external {
+    function _setUcoreUAIVaultRate(uint ucoreUAIVaultRate_) external {
         ensureAdmin();
 
-        uint oldVenusUAIVaultRate = venusUAIVaultRate;
-        venusUAIVaultRate = venusUAIVaultRate_;
-        emit NewVenusUAIVaultRate(oldVenusUAIVaultRate, venusUAIVaultRate_);
+        uint oldUcoreUAIVaultRate = ucoreUAIVaultRate;
+        ucoreUAIVaultRate = ucoreUAIVaultRate_;
+        emit NewUcoreUAIVaultRate(oldUcoreUAIVaultRate, ucoreUAIVaultRate_);
     }
 
     /**
@@ -1462,7 +1462,7 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
      * @param supplySpeeds New UCORE speed for supply
      * @param borrowSpeeds New UCORE speed for borrow
      */
-    function _setVenusSpeeds(
+    function _setUcoreSpeeds(
         VToken[] calldata vTokens,
         uint[] calldata supplySpeeds,
         uint[] calldata borrowSpeeds
@@ -1472,12 +1472,12 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         uint numTokens = vTokens.length;
         require(
             numTokens == supplySpeeds.length && numTokens == borrowSpeeds.length,
-            "Controller::_setVenusSpeeds invalid input"
+            "Controller::_setUcoreSpeeds invalid input"
         );
 
         for (uint i; i < numTokens; ++i) {
             ensureNonzeroAddress(address(vTokens[i]));
-            setVenusSpeedInternal(vTokens[i], supplySpeeds[i], borrowSpeeds[i]);
+            setUcoreSpeedInternal(vTokens[i], supplySpeeds[i], borrowSpeeds[i]);
         }
     }
 
@@ -1558,8 +1558,8 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
 
         uint256 actualAmount;
         uint256 deltaBlocks = sub_(getBlockNumber(), releaseStartBlock);
-        // releaseAmount = venusUAIVaultRate * deltaBlocks
-        uint256 _releaseAmount = mul_(venusUAIVaultRate, deltaBlocks);
+        // releaseAmount = ucoreUAIVaultRate * deltaBlocks
+        uint256 _releaseAmount = mul_(ucoreUAIVaultRate, deltaBlocks);
 
         if (ucoreBalance >= _releaseAmount) {
             actualAmount = _releaseAmount;
@@ -1574,7 +1574,7 @@ contract Controller is ControllerV11Storage, ControllerInterfaceG2, ControllerEr
         releaseStartBlock = getBlockNumber();
 
         ucore.transfer(uaiVaultAddress, actualAmount);
-        emit DistributedUAIVaultVenus(actualAmount);
+        emit DistributedUAIVaultUcore(actualAmount);
 
         IUAIVault(uaiVaultAddress).updatePendingRewards();
     }

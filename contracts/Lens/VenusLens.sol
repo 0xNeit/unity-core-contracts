@@ -10,13 +10,13 @@ import "../Tokens/UCORE/UCORE.sol";
 import "../Controller/ControllerInterface.sol";
 import "../Utils/SafeMath.sol";
 
-contract VenusLens is ExponentialNoError {
+contract UcoreLens is ExponentialNoError {
     using SafeMath for uint;
 
     /// @notice Blocks Per Day
     uint public constant BLOCKS_PER_DAY = 28800;
 
-    struct VenusMarketState {
+    struct UcoreMarketState {
         uint224 index;
         uint32 block;
     }
@@ -36,8 +36,8 @@ contract VenusLens is ExponentialNoError {
         address underlyingAssetAddress;
         uint vTokenDecimals;
         uint underlyingDecimals;
-        uint venusSupplySpeed;
-        uint venusBorrowSpeed;
+        uint ucoreSupplySpeed;
+        uint ucoreBorrowSpeed;
         uint dailySupplyUCore;
         uint dailyBorrowUCore;
     }
@@ -98,12 +98,12 @@ contract VenusLens is ExponentialNoError {
         uint allocated;
     }
 
-    struct VenusVotes {
+    struct UcoreVotes {
         uint blockNumber;
         uint votes;
     }
 
-    struct ClaimVenusLocalVariables {
+    struct ClaimUcoreLocalVariables {
         uint totalRewards;
         uint224 borrowIndex;
         uint32 borrowBlock;
@@ -151,8 +151,8 @@ contract VenusLens is ExponentialNoError {
             underlyingDecimals = EIP20Interface(vBep20.underlying()).decimals();
         }
 
-        uint venusSupplySpeedPerBlock = controller.venusSupplySpeeds(address(vToken));
-        uint venusBorrowSpeedPerBlock = controller.venusBorrowSpeeds(address(vToken));
+        uint ucoreSupplySpeedPerBlock = controller.ucoreSupplySpeeds(address(vToken));
+        uint ucoreBorrowSpeedPerBlock = controller.ucoreBorrowSpeeds(address(vToken));
 
         return
             VTokenMetadata({
@@ -170,10 +170,10 @@ contract VenusLens is ExponentialNoError {
                 underlyingAssetAddress: underlyingAssetAddress,
                 vTokenDecimals: vToken.decimals(),
                 underlyingDecimals: underlyingDecimals,
-                venusSupplySpeed: venusSupplySpeedPerBlock,
-                venusBorrowSpeed: venusBorrowSpeedPerBlock,
-                dailySupplyUCore: venusSupplySpeedPerBlock.mul(BLOCKS_PER_DAY),
-                dailyBorrowUCore: venusBorrowSpeedPerBlock.mul(BLOCKS_PER_DAY)
+                ucoreSupplySpeed: ucoreSupplySpeedPerBlock,
+                ucoreBorrowSpeed: ucoreBorrowSpeedPerBlock,
+                dailySupplyUCore: ucoreSupplySpeedPerBlock.mul(BLOCKS_PER_DAY),
+                dailyBorrowUCore: ucoreBorrowSpeedPerBlock.mul(BLOCKS_PER_DAY)
             });
     }
 
@@ -458,9 +458,9 @@ contract VenusLens is ExponentialNoError {
         address account
     ) external returns (UCOREBalanceMetadataExt memory) {
         uint balance = ucore.balanceOf(account);
-        controller.claimVenus(account);
+        controller.claimUcore(account);
         uint newBalance = ucore.balanceOf(account);
-        uint accrued = controller.venusAccrued(account);
+        uint accrued = controller.ucoreAccrued(account);
         uint total = add_(accrued, newBalance, "sum ucore total");
         uint allocated = sub_(total, balance, "sub allocated");
 
@@ -478,16 +478,16 @@ contract VenusLens is ExponentialNoError {
      * @param ucore UCORE contract address
      * @param account Address of the account
      * @param blockNumbers Array of blocks to query
-     * @return Array of VenusVotes structs with block number and vote count
+     * @return Array of UcoreVotes structs with block number and vote count
      */
-    function getVenusVotes(
+    function getUcoreVotes(
         UCORE ucore,
         address account,
         uint32[] calldata blockNumbers
-    ) external view returns (VenusVotes[] memory) {
-        VenusVotes[] memory res = new VenusVotes[](blockNumbers.length);
+    ) external view returns (UcoreVotes[] memory) {
+        UcoreVotes[] memory res = new UcoreVotes[](blockNumbers.length);
         for (uint i = 0; i < blockNumbers.length; i++) {
-            res[i] = VenusVotes({
+            res[i] = UcoreVotes({
                 blockNumber: uint256(blockNumbers[i]),
                 votes: uint256(ucore.getPriorVotes(account, blockNumbers[i]))
             });
@@ -497,22 +497,22 @@ contract VenusLens is ExponentialNoError {
 
     /**
      * @dev Queries the current supply to calculate rewards for an account
-     * @param supplyState VenusMarketState struct
+     * @param supplyState UcoreMarketState struct
      * @param vToken Address of a vToken
      * @param controller Address of the controller proxy
      */
-    function updateVenusSupplyIndex(
-        VenusMarketState memory supplyState,
+    function updateUcoreSupplyIndex(
+        UcoreMarketState memory supplyState,
         address vToken,
         ControllerInterface controller
     ) internal view {
-        uint supplySpeed = controller.venusSupplySpeeds(vToken);
+        uint supplySpeed = controller.ucoreSupplySpeeds(vToken);
         uint blockNumber = block.number;
         uint deltaBlocks = sub_(blockNumber, uint(supplyState.block));
         if (deltaBlocks > 0 && supplySpeed > 0) {
             uint supplyTokens = VToken(vToken).totalSupply();
-            uint venusAccrued = mul_(deltaBlocks, supplySpeed);
-            Double memory ratio = supplyTokens > 0 ? fraction(venusAccrued, supplyTokens) : Double({ mantissa: 0 });
+            uint ucoreAccrued = mul_(deltaBlocks, supplySpeed);
+            Double memory ratio = supplyTokens > 0 ? fraction(ucoreAccrued, supplyTokens) : Double({ mantissa: 0 });
             Double memory index = add_(Double({ mantissa: supplyState.index }), ratio);
             supplyState.index = safe224(index.mantissa, "new index overflows");
             supplyState.block = safe32(blockNumber, "block number overflows");
@@ -523,23 +523,23 @@ contract VenusLens is ExponentialNoError {
 
     /**
      * @dev Queries the current borrow to calculate rewards for an account
-     * @param borrowState VenusMarketState struct
+     * @param borrowState UcoreMarketState struct
      * @param vToken Address of a vToken
      * @param controller Address of the controller proxy
      */
-    function updateVenusBorrowIndex(
-        VenusMarketState memory borrowState,
+    function updateUcoreBorrowIndex(
+        UcoreMarketState memory borrowState,
         address vToken,
         Exp memory marketBorrowIndex,
         ControllerInterface controller
     ) internal view {
-        uint borrowSpeed = controller.venusBorrowSpeeds(vToken);
+        uint borrowSpeed = controller.ucoreBorrowSpeeds(vToken);
         uint blockNumber = block.number;
         uint deltaBlocks = sub_(blockNumber, uint(borrowState.block));
         if (deltaBlocks > 0 && borrowSpeed > 0) {
             uint borrowAmount = div_(VToken(vToken).totalBorrows(), marketBorrowIndex);
-            uint venusAccrued = mul_(deltaBlocks, borrowSpeed);
-            Double memory ratio = borrowAmount > 0 ? fraction(venusAccrued, borrowAmount) : Double({ mantissa: 0 });
+            uint ucoreAccrued = mul_(deltaBlocks, borrowSpeed);
+            Double memory ratio = borrowAmount > 0 ? fraction(ucoreAccrued, borrowAmount) : Double({ mantissa: 0 });
             Double memory index = add_(Double({ mantissa: borrowState.index }), ratio);
             borrowState.index = safe224(index.mantissa, "new index overflows");
             borrowState.block = safe32(blockNumber, "block number overflows");
@@ -550,22 +550,22 @@ contract VenusLens is ExponentialNoError {
 
     /**
      * @dev Calculate available rewards for an account's supply
-     * @param supplyState VenusMarketState struct
+     * @param supplyState UcoreMarketState struct
      * @param vToken Address of a vToken
      * @param supplier Address of the account supplying
      * @param controller Address of the controller proxy
      * @return Undistributed earned UCORE from supplies
      */
-    function distributeSupplierVenus(
-        VenusMarketState memory supplyState,
+    function distributeSupplierUcore(
+        UcoreMarketState memory supplyState,
         address vToken,
         address supplier,
         ControllerInterface controller
     ) internal view returns (uint) {
         Double memory supplyIndex = Double({ mantissa: supplyState.index });
-        Double memory supplierIndex = Double({ mantissa: controller.venusSupplierIndex(vToken, supplier) });
+        Double memory supplierIndex = Double({ mantissa: controller.ucoreSupplierIndex(vToken, supplier) });
         if (supplierIndex.mantissa == 0 && supplyIndex.mantissa > 0) {
-            supplierIndex.mantissa = controller.venusInitialIndex();
+            supplierIndex.mantissa = controller.ucoreInitialIndex();
         }
 
         Double memory deltaIndex = sub_(supplyIndex, supplierIndex);
@@ -576,22 +576,22 @@ contract VenusLens is ExponentialNoError {
 
     /**
      * @dev Calculate available rewards for an account's borrows
-     * @param borrowState VenusMarketState struct
+     * @param borrowState UcoreMarketState struct
      * @param vToken Address of a vToken
      * @param borrower Address of the account borrowing
      * @param marketBorrowIndex vToken Borrow index
      * @param controller Address of the controller proxy
      * @return Undistributed earned UCORE from borrows
      */
-    function distributeBorrowerVenus(
-        VenusMarketState memory borrowState,
+    function distributeBorrowerUcore(
+        UcoreMarketState memory borrowState,
         address vToken,
         address borrower,
         Exp memory marketBorrowIndex,
         ControllerInterface controller
     ) internal view returns (uint) {
         Double memory borrowIndex = Double({ mantissa: borrowState.index });
-        Double memory borrowerIndex = Double({ mantissa: controller.venusBorrowerIndex(vToken, borrower) });
+        Double memory borrowerIndex = Double({ mantissa: controller.ucoreBorrowerIndex(vToken, borrower) });
         if (borrowerIndex.mantissa > 0) {
             Double memory deltaIndex = sub_(borrowIndex, borrowerIndex);
             uint borrowerAmount = div_(VToken(vToken).borrowBalanceStored(borrower), marketBorrowIndex);
@@ -612,21 +612,21 @@ contract VenusLens is ExponentialNoError {
         ControllerInterface controller
     ) external view returns (RewardSummary memory) {
         VToken[] memory vTokens = controller.getAllMarkets();
-        ClaimVenusLocalVariables memory vars;
+        ClaimUcoreLocalVariables memory vars;
         RewardSummary memory rewardSummary;
         rewardSummary.distributorAddress = address(controller);
         rewardSummary.rewardTokenAddress = controller.getUCOREAddress();
-        rewardSummary.totalRewards = controller.venusAccrued(holder);
+        rewardSummary.totalRewards = controller.ucoreAccrued(holder);
         rewardSummary.pendingRewards = new PendingReward[](vTokens.length);
         for (uint i; i < vTokens.length; ++i) {
-            (vars.borrowIndex, vars.borrowBlock) = controller.venusBorrowState(address(vTokens[i]));
-            VenusMarketState memory borrowState = VenusMarketState({
+            (vars.borrowIndex, vars.borrowBlock) = controller.ucoreBorrowState(address(vTokens[i]));
+            UcoreMarketState memory borrowState = UcoreMarketState({
                 index: vars.borrowIndex,
                 block: vars.borrowBlock
             });
 
-            (vars.supplyIndex, vars.supplyBlock) = controller.venusSupplyState(address(vTokens[i]));
-            VenusMarketState memory supplyState = VenusMarketState({
+            (vars.supplyIndex, vars.supplyBlock) = controller.ucoreSupplyState(address(vTokens[i]));
+            UcoreMarketState memory supplyState = UcoreMarketState({
                 index: vars.supplyIndex,
                 block: vars.supplyBlock
             });
@@ -636,8 +636,8 @@ contract VenusLens is ExponentialNoError {
             PendingReward memory marketReward;
             marketReward.vTokenAddress = address(vTokens[i]);
 
-            updateVenusBorrowIndex(borrowState, address(vTokens[i]), borrowIndex, controller);
-            uint256 borrowReward = distributeBorrowerVenus(
+            updateUcoreBorrowIndex(borrowState, address(vTokens[i]), borrowIndex, controller);
+            uint256 borrowReward = distributeBorrowerUcore(
                 borrowState,
                 address(vTokens[i]),
                 holder,
@@ -645,8 +645,8 @@ contract VenusLens is ExponentialNoError {
                 controller
             );
 
-            updateVenusSupplyIndex(supplyState, address(vTokens[i]), controller);
-            uint256 supplyReward = distributeSupplierVenus(supplyState, address(vTokens[i]), holder, controller);
+            updateUcoreSupplyIndex(supplyState, address(vTokens[i]), controller);
+            uint256 supplyReward = distributeSupplierUcore(supplyState, address(vTokens[i]), holder, controller);
 
             marketReward.amount = add_(borrowReward, supplyReward);
             rewardSummary.pendingRewards[i] = marketReward;

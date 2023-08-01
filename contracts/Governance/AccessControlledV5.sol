@@ -4,7 +4,7 @@ pragma solidity 0.5.16;
 import "./IAccessControlManagerV5.sol";
 
 /**
- * @title Venus Access Control Contract.
+ * @title UnityCore Access Control Contract.
  * @dev This contract is helper between access control manager and actual contract
  * This contract further inherited by other contract to integrate access controlled mechanism
  * It provides initialise methods and verifying access methods

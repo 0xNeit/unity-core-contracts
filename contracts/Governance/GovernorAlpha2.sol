@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 contract GovernorAlpha2 {
     /// @notice The name of this contract
-    string public constant name = "Venus Governor Alpha";
+    string public constant name = "Ucore Governor Alpha";
 
     /// @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
     function quorumVotes() public pure returns (uint) {
@@ -30,10 +30,10 @@ contract GovernorAlpha2 {
         return (60 * 60 * 24 * 3) / 3;
     } // ~3 days in blocks (assuming 3s blocks)
 
-    /// @notice The address of the Venus Protocol Timelock
+    /// @notice The address of the Ucore Protocol Timelock
     TimelockInterface public timelock;
 
-    /// @notice The address of the Venus governance token
+    /// @notice The address of the Ucore governance token
     UCOREInterface public ucore;
 
     /// @notice The address of the Governor Guardian

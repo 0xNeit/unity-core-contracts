@@ -11,7 +11,7 @@ import "../Tokens/UAI/UAIControllerInterface.sol";
 
 /**
  * @title ControllerLens Contract
- * @author Venus
+ * @author UnityCore
  * @notice The ControllerLens contract has functions to get the number of tokens that
  * can be seized through liquidation, hypothetical account liquidity and shortfall of an account.
  */

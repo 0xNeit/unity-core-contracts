@@ -6,8 +6,8 @@ import "./UCOREVestingStorage.sol";
 import "./UCOREVestingProxy.sol";
 
 /**
- * @title Venus's UCOREVesting Contract
- * @author Venus
+ * @title UnityCore's UCOREVesting Contract
+ * @author UnityCore
  */
 contract UCOREVesting is UCOREVestingStorage {
     using SafeMath for uint256;

@@ -11,9 +11,9 @@ contract UAIControllerHarness is UAIController {
         admin = msg.sender;
     }
 
-    function setVenusUAIState(uint224 index, uint32 blockNumber_) public {
-        venusUAIState.index = index;
-        venusUAIState.block = blockNumber_;
+    function setUcoreUAIState(uint224 index, uint32 blockNumber_) public {
+        ucoreUAIState.index = index;
+        ucoreUAIState.block = blockNumber_;
     }
 
     function setUAIAddress(address uaiAddress_) public {

@@ -1,11 +1,11 @@
 pragma solidity ^0.5.16;
 
 interface IController {
-    function refreshVenusSpeeds() external;
+    function refreshUcoreSpeeds() external;
 }
 
 contract RefreshSpeedsProxy {
     constructor(address controller) public {
-        IController(controller).refreshVenusSpeeds();
+        IController(controller).refreshUcoreSpeeds();
     }
 }

@@ -22,18 +22,18 @@ contract ControllerHarness is Controller {
 
     constructor() public Controller() {}
 
-    function setVenusSupplyState(address vToken, uint224 index, uint32 blockNumber_) public {
-        venusSupplyState[vToken].index = index;
-        venusSupplyState[vToken].block = blockNumber_;
+    function setUcoreSupplyState(address vToken, uint224 index, uint32 blockNumber_) public {
+        ucoreSupplyState[vToken].index = index;
+        ucoreSupplyState[vToken].block = blockNumber_;
     }
 
-    function setVenusBorrowState(address vToken, uint224 index, uint32 blockNumber_) public {
-        venusBorrowState[vToken].index = index;
-        venusBorrowState[vToken].block = blockNumber_;
+    function setUcoreBorrowState(address vToken, uint224 index, uint32 blockNumber_) public {
+        ucoreBorrowState[vToken].index = index;
+        ucoreBorrowState[vToken].block = blockNumber_;
     }
 
-    function setVenusAccrued(address user, uint userAccrued) public {
-        venusAccrued[user] = userAccrued;
+    function setUcoreAccrued(address user, uint userAccrued) public {
+        ucoreAccrued[user] = userAccrued;
     }
 
     function setUCOREAddress(address ucoreAddress_) public {
@@ -54,30 +54,30 @@ contract ControllerHarness is Controller {
 
     /**
      * @notice Set the amount of UCORE distributed per block
-     * @param venusRate_ The amount of UCORE wei per block to distribute
+     * @param ucoreRate_ The amount of UCORE wei per block to distribute
      */
-    function harnessSetVenusRate(uint venusRate_) public {
-        venusRate = venusRate_;
+    function harnessSetUcoreRate(uint ucoreRate_) public {
+        ucoreRate = ucoreRate_;
     }
 
     /**
      * @notice Recalculate and update UCORE speeds for all UCORE markets
      */
-    function harnessRefreshVenusSpeeds() public {
+    function harnessRefreshUcoreSpeeds() public {
         VToken[] memory allMarkets_ = allMarkets;
 
         for (uint i = 0; i < allMarkets_.length; i++) {
             VToken vToken = allMarkets_[i];
             Exp memory borrowIndex = Exp({ mantissa: vToken.borrowIndex() });
-            updateVenusSupplyIndex(address(vToken));
-            updateVenusBorrowIndex(address(vToken), borrowIndex);
+            updateUcoreSupplyIndex(address(vToken));
+            updateUcoreBorrowIndex(address(vToken), borrowIndex);
         }
 
         Exp memory totalUtility = Exp({ mantissa: 0 });
         Exp[] memory utilities = new Exp[](allMarkets_.length);
         for (uint i = 0; i < allMarkets_.length; i++) {
             VToken vToken = allMarkets_[i];
-            if (venusSpeeds[address(vToken)] > 0) {
+            if (ucoreSpeeds[address(vToken)] > 0) {
                 Exp memory assetPrice = Exp({ mantissa: oracle.getUnderlyingPrice(vToken) });
                 Exp memory utility = mul_(assetPrice, vToken.totalBorrows());
                 utilities[i] = utility;
@@ -87,60 +87,60 @@ contract ControllerHarness is Controller {
 
         for (uint i = 0; i < allMarkets_.length; i++) {
             VToken vToken = allMarkets[i];
-            uint newSpeed = totalUtility.mantissa > 0 ? mul_(venusRate, div_(utilities[i], totalUtility)) : 0;
-            setVenusSpeedInternal(vToken, newSpeed, newSpeed);
+            uint newSpeed = totalUtility.mantissa > 0 ? mul_(ucoreRate, div_(utilities[i], totalUtility)) : 0;
+            setUcoreSpeedInternal(vToken, newSpeed, newSpeed);
         }
     }
 
-    function setVenusBorrowerIndex(address vToken, address borrower, uint index) public {
-        venusBorrowerIndex[vToken][borrower] = index;
+    function setUcoreBorrowerIndex(address vToken, address borrower, uint index) public {
+        ucoreBorrowerIndex[vToken][borrower] = index;
     }
 
-    function setVenusSupplierIndex(address vToken, address supplier, uint index) public {
-        venusSupplierIndex[vToken][supplier] = index;
+    function setUcoreSupplierIndex(address vToken, address supplier, uint index) public {
+        ucoreSupplierIndex[vToken][supplier] = index;
     }
 
-    function harnessDistributeAllBorrowerVenus(
+    function harnessDistributeAllBorrowerUcore(
         address vToken,
         address borrower,
         uint marketBorrowIndexMantissa
     ) public {
-        distributeBorrowerVenus(vToken, borrower, Exp({ mantissa: marketBorrowIndexMantissa }));
-        venusAccrued[borrower] = grantUCOREInternal(borrower, venusAccrued[borrower], 0, false);
+        distributeBorrowerUcore(vToken, borrower, Exp({ mantissa: marketBorrowIndexMantissa }));
+        ucoreAccrued[borrower] = grantUCOREInternal(borrower, ucoreAccrued[borrower], 0, false);
     }
 
-    function harnessDistributeAllSupplierVenus(address vToken, address supplier) public {
-        distributeSupplierVenus(vToken, supplier);
-        venusAccrued[supplier] = grantUCOREInternal(supplier, venusAccrued[supplier], 0, false);
+    function harnessDistributeAllSupplierUcore(address vToken, address supplier) public {
+        distributeSupplierUcore(vToken, supplier);
+        ucoreAccrued[supplier] = grantUCOREInternal(supplier, ucoreAccrued[supplier], 0, false);
     }
 
-    function harnessUpdateVenusBorrowIndex(address vToken, uint marketBorrowIndexMantissa) public {
-        updateVenusBorrowIndex(vToken, Exp({ mantissa: marketBorrowIndexMantissa }));
+    function harnessUpdateUcoreBorrowIndex(address vToken, uint marketBorrowIndexMantissa) public {
+        updateUcoreBorrowIndex(vToken, Exp({ mantissa: marketBorrowIndexMantissa }));
     }
 
-    function harnessUpdateVenusSupplyIndex(address vToken) public {
-        updateVenusSupplyIndex(vToken);
+    function harnessUpdateUcoreSupplyIndex(address vToken) public {
+        updateUcoreSupplyIndex(vToken);
     }
 
-    function harnessDistributeBorrowerVenus(address vToken, address borrower, uint marketBorrowIndexMantissa) public {
-        distributeBorrowerVenus(vToken, borrower, Exp({ mantissa: marketBorrowIndexMantissa }));
+    function harnessDistributeBorrowerUcore(address vToken, address borrower, uint marketBorrowIndexMantissa) public {
+        distributeBorrowerUcore(vToken, borrower, Exp({ mantissa: marketBorrowIndexMantissa }));
     }
 
-    function harnessDistributeSupplierVenus(address vToken, address supplier) public {
-        distributeSupplierVenus(vToken, supplier);
+    function harnessDistributeSupplierUcore(address vToken, address supplier) public {
+        distributeSupplierUcore(vToken, supplier);
     }
 
-    function harnessTransferVenus(address user, uint userAccrued, uint threshold) public returns (uint) {
+    function harnessTransferUcore(address user, uint userAccrued, uint threshold) public returns (uint) {
         if (userAccrued > 0 && userAccrued >= threshold) {
             return grantUCOREInternal(user, userAccrued, 0, false);
         }
         return userAccrued;
     }
 
-    function harnessAddVenusMarkets(address[] memory vTokens) public {
+    function harnessAddUcoreMarkets(address[] memory vTokens) public {
         for (uint i = 0; i < vTokens.length; i++) {
-            // temporarily set venusSpeed to 1 (will be fixed by `harnessRefreshVenusSpeeds`)
-            setVenusSpeedInternal(VToken(vTokens[i]), 1, 1);
+            // temporarily set ucoreSpeed to 1 (will be fixed by `harnessRefreshUcoreSpeeds`)
+            setUcoreSpeedInternal(VToken(vTokens[i]), 1, 1);
         }
     }
 
@@ -161,23 +161,23 @@ contract ControllerHarness is Controller {
         return blockNumber;
     }
 
-    function getVenusMarkets() public view returns (address[] memory) {
+    function getUcoreMarkets() public view returns (address[] memory) {
         uint m = allMarkets.length;
         uint n = 0;
         for (uint i = 0; i < m; i++) {
-            if (venusSpeeds[address(allMarkets[i])] > 0) {
+            if (ucoreSpeeds[address(allMarkets[i])] > 0) {
                 n++;
             }
         }
 
-        address[] memory venusMarkets = new address[](n);
+        address[] memory ucoreMarkets = new address[](n);
         uint k = 0;
         for (uint i = 0; i < m; i++) {
-            if (venusSpeeds[address(allMarkets[i])] > 0) {
-                venusMarkets[k++] = address(allMarkets[i]);
+            if (ucoreSpeeds[address(allMarkets[i])] > 0) {
+                ucoreMarkets[k++] = address(allMarkets[i]);
             }
         }
-        return venusMarkets;
+        return ucoreMarkets;
     }
 
     function harnessSetReleaseStartBlock(uint startBlock) external {
@@ -185,7 +185,7 @@ contract ControllerHarness is Controller {
     }
 
     function harnessAddVtoken(address vToken) external {
-        markets[vToken] = Market({ isListed: true, isVenus: false, collateralFactorMantissa: 0 });
+        markets[vToken] = Market({ isListed: true, isUcore: false, collateralFactorMantissa: 0 });
     }
 }
 
@@ -559,15 +559,15 @@ contract BoolController is ControllerInterface {
         revert();
     }
 
-    function claimVenus(address) external {
+    function claimUcore(address) external {
         revert();
     }
 
-    function venusAccrued(address) external view returns (uint) {
+    function ucoreAccrued(address) external view returns (uint) {
         revert();
     }
 
-    function venusSpeeds(address) external view returns (uint) {
+    function ucoreSpeeds(address) external view returns (uint) {
         revert();
     }
 
@@ -575,23 +575,23 @@ contract BoolController is ControllerInterface {
         revert();
     }
 
-    function venusSupplierIndex(address, address) external view returns (uint) {
+    function ucoreSupplierIndex(address, address) external view returns (uint) {
         revert();
     }
 
-    function venusInitialIndex() external view returns (uint224) {
+    function ucoreInitialIndex() external view returns (uint224) {
         revert();
     }
 
-    function venusBorrowerIndex(address, address) external view returns (uint) {
+    function ucoreBorrowerIndex(address, address) external view returns (uint) {
         revert();
     }
 
-    function venusBorrowState(address) external view returns (uint224, uint32) {
+    function ucoreBorrowState(address) external view returns (uint224, uint32) {
         revert();
     }
 
-    function venusSupplyState(address) external view returns (uint224, uint32) {
+    function ucoreSupplyState(address) external view returns (uint224, uint32) {
         revert();
     }
 }

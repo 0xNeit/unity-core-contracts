@@ -13,7 +13,7 @@ import "./UAI.sol";
 
 /**
  * @title UAI Controller
- * @author Venus
+ * @author UnityCore
  * @notice This is the implementation contract for the UAIUnitroller proxy
  */
 contract UAIController is UAIControllerStorageG2, UAIControllerErrorReporter, Exponential {

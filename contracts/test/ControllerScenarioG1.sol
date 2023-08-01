@@ -45,23 +45,23 @@ contract ControllerScenarioG1 is ControllerG1 {
         return blockNumber;
     }
 
-    function getVenusMarkets() public view returns (address[] memory) {
+    function getUcoreMarkets() public view returns (address[] memory) {
         uint m = allMarkets.length;
         uint n = 0;
         for (uint i = 0; i < m; i++) {
-            if (markets[address(allMarkets[i])].isVenus) {
+            if (markets[address(allMarkets[i])].isUcore) {
                 n++;
             }
         }
 
-        address[] memory venusMarkets = new address[](n);
+        address[] memory ucoreMarkets = new address[](n);
         uint k = 0;
         for (uint i = 0; i < m; i++) {
-            if (markets[address(allMarkets[i])].isVenus) {
-                venusMarkets[k++] = address(allMarkets[i]);
+            if (markets[address(allMarkets[i])].isUcore) {
+                ucoreMarkets[k++] = address(allMarkets[i]);
             }
         }
-        return venusMarkets;
+        return ucoreMarkets;
     }
 
     function unlist(VToken vToken) public {

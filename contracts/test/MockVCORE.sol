@@ -3,9 +3,9 @@ pragma solidity ^0.5.16;
 import "../Tokens/VTokens/VToken.sol";
 
 /**
- * @title Venus's vCORE Contract
+ * @title UnityCore's vCORE Contract
  * @notice vToken which wraps CORE
- * @author Venus
+ * @author UnityCore
  */
 contract MockVCORE is VToken {
     /**

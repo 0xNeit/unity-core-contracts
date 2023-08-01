@@ -2,7 +2,7 @@
 // Adapted from OpenZeppelin Contracts v4.3.2 (utils/cryptography/ECDSA.sol)
 
 // SPDX-Copyright-Text: OpenZeppelin, 2021
-// SPDX-Copyright-Text: Venus, 2021
+// SPDX-Copyright-Text: Ucore, 2021
 
 pragma solidity ^0.5.16;
 

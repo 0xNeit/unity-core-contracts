@@ -7,8 +7,8 @@ import "./URTConverterStorage.sol";
 import "./URTConverterProxy.sol";
 
 /**
- * @title Venus's URTConversion Contract
- * @author Venus
+ * @title UnityCore's URTConversion Contract
+ * @author UnityCore
  */
 contract URTConverter is URTConverterStorage {
     using SafeMath for uint256;

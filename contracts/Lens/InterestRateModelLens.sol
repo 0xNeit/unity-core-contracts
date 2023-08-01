@@ -6,7 +6,7 @@ import "../Utils/SafeMath.sol";
 
 /**
  * @title InterestRateModelLens Contract
- * @author Venus
+ * @author UnityCore
  * @notice Lens for querying interest rate model simulations
  */
 contract InterestRateModelLens {

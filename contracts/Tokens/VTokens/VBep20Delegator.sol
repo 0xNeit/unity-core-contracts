@@ -3,9 +3,9 @@ pragma solidity ^0.5.16;
 import "./VTokenInterfaces.sol";
 
 /**
- * @title Venus's VBep20Delegator Contract
+ * @title UnityCore's VBep20Delegator Contract
  * @notice vTokens which wrap an EIP-20 underlying and delegate to an implementation
- * @author Venus
+ * @author UnityCore
  */
 contract VBep20Delegator is VTokenInterface, VBep20Interface, VDelegatorInterface {
     /**

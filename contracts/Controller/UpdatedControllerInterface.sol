@@ -73,21 +73,21 @@ contract UpdatedControllerInterface is UpdatedControllerInterfaceG2 {
 
     function getAssetsIn(address) external view returns (VToken[] memory);
 
-    function claimVenus(address) external;
+    function claimUcore(address) external;
 
-    function venusAccrued(address) external view returns (uint);
+    function ucoreAccrued(address) external view returns (uint);
 
-    function venusSpeeds(address) external view returns (uint);
+    function ucoreSpeeds(address) external view returns (uint);
 
     function getAllMarkets() external view returns (VToken[] memory);
 
-    function venusSupplierIndex(address, address) external view returns (uint);
+    function ucoreSupplierIndex(address, address) external view returns (uint);
 
-    function venusInitialIndex() external view returns (uint224);
+    function ucoreInitialIndex() external view returns (uint224);
 
-    function venusBorrowerIndex(address, address) external view returns (uint);
+    function ucoreBorrowerIndex(address, address) external view returns (uint);
 
-    function venusBorrowState(address) external view returns (uint224, uint32);
+    function ucoreBorrowState(address) external view returns (uint224, uint32);
 
-    function venusSupplyState(address) external view returns (uint224, uint32);
+    function ucoreSupplyState(address) external view returns (uint224, uint32);
 }

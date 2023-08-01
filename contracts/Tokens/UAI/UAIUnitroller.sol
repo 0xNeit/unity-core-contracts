@@ -5,7 +5,7 @@ import "./UAIControllerStorage.sol";
 
 /**
  * @title UAI Unitroller
- * @author Venus
+ * @author UnityCore
  * @notice This is the proxy contract for the UAIController
  */
 contract UAIUnitroller is UAIUnitrollerAdminStorage, UAIControllerErrorReporter {

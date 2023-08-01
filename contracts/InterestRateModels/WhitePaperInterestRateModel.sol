@@ -4,9 +4,9 @@ import "../Utils/SafeMath.sol";
 import "./InterestRateModel.sol";
 
 /**
- * @title Venus's WhitePaperInterestRateModel Contract
- * @author Venus
- * @notice The parameterized model described in section 2.4 of the original Venus Protocol whitepaper
+ * @title UnityCore's WhitePaperInterestRateModel Contract
+ * @author UnityCore
+ * @notice The parameterized model described in section 2.4 of the original Ucore Protocol whitepaper
  */
 contract WhitePaperInterestRateModel is InterestRateModel {
     using SafeMath for uint;
