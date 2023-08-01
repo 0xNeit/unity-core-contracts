@@ -1,7 +1,7 @@
 pragma solidity ^0.5.16;
 
 /**
- * @title ERC 20 Token Standard Interface
+ * @title BEP 20 Token Standard Interface
  *  https://eips.ethereum.org/EIPS/eip-20
  */
 interface EIP20Interface {

@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
-import { IController, IVToken, IVERC20, IVCORE, IUAIController } from "./Interfaces.sol";
+import { IComptroller, IVToken, IVBep20, IVBNB, IVAIController } from "./Interfaces.sol";
 
 /**
  * @title Liquidator
@@ -13,17 +13,17 @@ import { IController, IVToken, IVERC20, IVCORE, IUAIController } from "./Interfa
  * @notice The Liquidator contract is responsible for liquidating underwater accounts.
  */
 contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
-    /// @notice Address of vCORE contract.
+    /// @notice Address of vBNB contract.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IVCORE public immutable vCore;
+    IVBNB public immutable vBnb;
 
     /// @notice Address of Venus Unitroller contract.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IController public immutable controller;
+    IComptroller public immutable comptroller;
 
-    /// @notice Address of UAIUnitroller contract.
+    /// @notice Address of VAIUnitroller contract.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IUAIController public immutable uaiController;
+    IVAIController public immutable vaiController;
 
     /// @notice Address of Venus Treasury.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -91,8 +91,8 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     /// @notice Thrown if trying to remove a liquidator that is not in the allowedLiquidatorsByAccount mapping
     error AllowlistEntryNotFound(address borrower, address liquidator);
 
-    /// @notice Thrown if CORE amount sent with the transaction doesn't correspond to the
-    ///         intended CORE repayment
+    /// @notice Thrown if BNB amount sent with the transaction doesn't correspond to the
+    ///         intended BNB repayment
     error WrongTransactionAmount(uint256 expected, uint256 actual);
 
     /// @notice Thrown if the argument is a zero address because probably it is a mistake
@@ -104,17 +104,17 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /// @notice Constructor for the implementation contract. Sets immutable variables.
-    /// @param controller_ The address of the Controller contract
-    /// @param vCore_ The address of the VCORE
+    /// @param comptroller_ The address of the Comptroller contract
+    /// @param vBnb_ The address of the VBNB
     /// @param treasury_ The address of Venus treasury
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address controller_, address payable vCore_, address treasury_) {
-        ensureNonzeroAddress(vCore_);
-        ensureNonzeroAddress(controller_);
+    constructor(address comptroller_, address payable vBnb_, address treasury_) {
+        ensureNonzeroAddress(vBnb_);
+        ensureNonzeroAddress(comptroller_);
         ensureNonzeroAddress(treasury_);
-        vCore = IVCORE(vCore_);
-        controller = IController(controller_);
-        uaiController = IUAIController(IController(controller_).uaiController());
+        vBnb = IVBNB(vBnb_);
+        comptroller = IComptroller(comptroller_);
+        vaiController = IVAIController(IComptroller(comptroller_).vaiController());
         treasury = treasury_;
         _disableInitializers();
     }
@@ -191,7 +191,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     /// @notice Liquidates a borrow and splits the seized amount between treasury and
     ///         liquidator. The liquidators should use this interface instead of calling
     ///         vToken.liquidateBorrow(...) directly.
-    /// @notice For CORE borrows msg.value should be equal to repayAmount; otherwise msg.value
+    /// @notice For BNB borrows msg.value should be equal to repayAmount; otherwise msg.value
     ///      should be zero.
     /// @param vToken Borrowed vToken
     /// @param borrower The address of the borrower
@@ -206,19 +206,19 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
         ensureNonzeroAddress(borrower);
         checkRestrictions(borrower, msg.sender);
         uint256 ourBalanceBefore = vTokenCollateral.balanceOf(address(this));
-        if (vToken == address(vCore)) {
+        if (vToken == address(vBnb)) {
             if (repayAmount != msg.value) {
                 revert WrongTransactionAmount(repayAmount, msg.value);
             }
-            vCore.liquidateBorrow{ value: msg.value }(borrower, vTokenCollateral);
+            vBnb.liquidateBorrow{ value: msg.value }(borrower, vTokenCollateral);
         } else {
             if (msg.value != 0) {
                 revert WrongTransactionAmount(0, msg.value);
             }
-            if (vToken == address(uaiController)) {
-                _liquidateUAI(borrower, repayAmount, vTokenCollateral);
+            if (vToken == address(vaiController)) {
+                _liquidateVAI(borrower, repayAmount, vTokenCollateral);
             } else {
-                _liquidateERC20(IVERC20(vToken), borrower, repayAmount, vTokenCollateral);
+                _liquidateBep20(IVBep20(vToken), borrower, repayAmount, vTokenCollateral);
             }
         }
         uint256 ourBalanceAfter = vTokenCollateral.balanceOf(address(this));
@@ -236,7 +236,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     /// @notice Sets the new percent of the seized amount that goes to treasury. Should
-    ///         be less than or equal to controller.liquidationIncentiveMantissa().sub(1e18).
+    ///         be less than or equal to comptroller.liquidationIncentiveMantissa().sub(1e18).
     /// @param newTreasuryPercentMantissa New treasury percent (scaled by 10^18).
     function setTreasuryPercent(uint256 newTreasuryPercentMantissa) external onlyOwner {
         validateTreasuryPercentMantissa(newTreasuryPercentMantissa);
@@ -245,22 +245,22 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     /// @dev Transfers BEP20 tokens to self, then approves vToken to take these tokens.
-    function _liquidateERC20(IVERC20 vToken, address borrower, uint256 repayAmount, IVToken vTokenCollateral) internal {
+    function _liquidateBep20(IVBep20 vToken, address borrower, uint256 repayAmount, IVToken vTokenCollateral) internal {
         IERC20Upgradeable borrowedToken = IERC20Upgradeable(vToken.underlying());
-        uint256 actualRepayAmount = _transferERC20(borrowedToken, msg.sender, address(this), repayAmount);
+        uint256 actualRepayAmount = _transferBep20(borrowedToken, msg.sender, address(this), repayAmount);
         borrowedToken.safeApprove(address(vToken), 0);
         borrowedToken.safeApprove(address(vToken), actualRepayAmount);
         requireNoError(vToken.liquidateBorrow(borrower, actualRepayAmount, vTokenCollateral));
     }
 
-    /// @dev Transfers BEP20 tokens to self, then approves UAI to take these tokens.
-    function _liquidateUAI(address borrower, uint256 repayAmount, IVToken vTokenCollateral) internal {
-        IERC20Upgradeable uai = IERC20Upgradeable(uaiController.getUAIAddress());
-        uai.safeTransferFrom(msg.sender, address(this), repayAmount);
-        uai.safeApprove(address(uaiController), 0);
-        uai.safeApprove(address(uaiController), repayAmount);
+    /// @dev Transfers BEP20 tokens to self, then approves VAI to take these tokens.
+    function _liquidateVAI(address borrower, uint256 repayAmount, IVToken vTokenCollateral) internal {
+        IERC20Upgradeable vai = IERC20Upgradeable(vaiController.getVAIAddress());
+        vai.safeTransferFrom(msg.sender, address(this), repayAmount);
+        vai.safeApprove(address(vaiController), 0);
+        vai.safeApprove(address(vaiController), repayAmount);
 
-        (uint err, ) = uaiController.liquidateUAI(borrower, repayAmount, vTokenCollateral);
+        (uint err, ) = vaiController.liquidateVAI(borrower, repayAmount, vTokenCollateral);
         requireNoError(err);
     }
 
@@ -280,7 +280,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     /// @dev Transfers tokens and returns the actual transfer amount
-    function _transferERC20(
+    function _transferBep20(
         IERC20Upgradeable token,
         address from,
         address to,
@@ -293,7 +293,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
 
     /// @dev Computes the amounts that would go to treasury and to the liquidator.
     function _splitLiquidationIncentive(uint256 seizedAmount) internal view returns (uint256 ours, uint256 theirs) {
-        uint256 totalIncentive = controller.liquidationIncentiveMantissa();
+        uint256 totalIncentive = comptroller.liquidationIncentiveMantissa();
         ours = (seizedAmount * treasuryPercentMantissa) / totalIncentive;
         theirs = seizedAmount - ours;
         return (ours, theirs);
@@ -320,7 +320,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function validateTreasuryPercentMantissa(uint256 treasuryPercentMantissa_) internal view {
-        uint256 maxTreasuryPercentMantissa = controller.liquidationIncentiveMantissa() - 1e18;
+        uint256 maxTreasuryPercentMantissa = comptroller.liquidationIncentiveMantissa() - 1e18;
         if (treasuryPercentMantissa_ > maxTreasuryPercentMantissa) {
             revert TreasuryPercentTooHigh(maxTreasuryPercentMantissa, treasuryPercentMantissa_);
         }

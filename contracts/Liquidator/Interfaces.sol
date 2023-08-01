@@ -4,7 +4,7 @@ import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 
 interface IVToken is IERC20Upgradeable {}
 
-interface IVERC20 is IVToken {
+interface IVBep20 is IVToken {
     function underlying() external view returns (address);
 
     function liquidateBorrow(
@@ -14,22 +14,22 @@ interface IVERC20 is IVToken {
     ) external returns (uint256);
 }
 
-interface IVCORE is IVToken {
+interface IVBNB is IVToken {
     function liquidateBorrow(address borrower, IVToken vTokenCollateral) external payable;
 }
 
-interface IUAIController {
-    function liquidateUAI(
+interface IVAIController {
+    function liquidateVAI(
         address borrower,
         uint256 repayAmount,
         IVToken vTokenCollateral
     ) external returns (uint256, uint256);
 
-    function getUAIAddress() external view returns (address);
+    function getVAIAddress() external view returns (address);
 }
 
-interface IController {
+interface IComptroller {
     function liquidationIncentiveMantissa() external view returns (uint256);
 
-    function uaiController() external view returns (IUAIController);
+    function vaiController() external view returns (IVAIController);
 }
