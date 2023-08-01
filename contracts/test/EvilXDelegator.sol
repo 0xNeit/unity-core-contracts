@@ -11,7 +11,7 @@ contract EvilXDelegator is VTokenInterface, VBep20Interface, VDelegatorInterface
     /**
      * @notice Construct a new money market
      * @param underlying_ The address of the underlying asset
-     * @param comptroller_ The address of the Comptroller
+     * @param controller_ The address of the Controller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
      * @param name_ BEP-20 name of this token
@@ -23,7 +23,7 @@ contract EvilXDelegator is VTokenInterface, VBep20Interface, VDelegatorInterface
      */
     constructor(
         address underlying_,
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint256 initialExchangeRateMantissa_,
         string memory name_,
@@ -42,7 +42,7 @@ contract EvilXDelegator is VTokenInterface, VBep20Interface, VDelegatorInterface
             abi.encodeWithSignature(
                 "initialize(address,address,address,uint256,string,string,uint8)",
                 underlying_,
-                comptroller_,
+                controller_,
                 interestRateModel_,
                 initialExchangeRateMantissa_,
                 name_,
@@ -259,7 +259,7 @@ contract EvilXDelegator is VTokenInterface, VBep20Interface, VDelegatorInterface
 
     /**
      * @notice Get a snapshot of the account's balances, and the cached exchange rate
-     * @dev This is used by comptroller to more efficiently perform liquidity checks.
+     * @dev This is used by controller to more efficiently perform liquidity checks.
      * @param account Address of the account to snapshot
      * @return (possible error, token balance, borrow balance, exchange rate mantissa)
      */
@@ -389,13 +389,13 @@ contract EvilXDelegator is VTokenInterface, VBep20Interface, VDelegatorInterface
     }
 
     /**
-     * @notice Sets a new comptroller for the market
-     * @dev Admin function to set a new comptroller
+     * @notice Sets a new controller for the market
+     * @dev Admin function to set a new controller
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setComptroller(ComptrollerInterface newComptroller) public returns (uint256) {
+    function _setController(ControllerInterface newController) public returns (uint256) {
         bytes memory data = delegateToImplementation(
-            abi.encodeWithSignature("_setComptroller(address)", newComptroller)
+            abi.encodeWithSignature("_setController(address)", newController)
         );
         return abi.decode(data, (uint256));
     }

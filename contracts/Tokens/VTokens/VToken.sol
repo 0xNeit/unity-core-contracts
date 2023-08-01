@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-import "../../Comptroller/ComptrollerInterface.sol";
+import "../../Controller/ControllerInterface.sol";
 import "../../Utils/ErrorReporter.sol";
 import "../../Utils/Exponential.sol";
 import "../../Tokens/EIP20Interface.sol";
@@ -254,7 +254,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
     /**
      * @notice Get a snapshot of the account's balances, and the cached exchange rate
-     * @dev This is used by comptroller to more efficiently perform liquidity checks.
+     * @dev This is used by controller to more efficiently perform liquidity checks.
      * @param account Address of the account to snapshot
      * @return (possible error, token balance, borrow balance, exchange rate mantissa)
      */
@@ -304,7 +304,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
     /**
      * @notice Initialize the money market
-     * @param comptroller_ The address of the Comptroller
+     * @param controller_ The address of the Controller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
      * @param name_ EIP-20 name of this token
@@ -312,7 +312,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
      * @param decimals_ EIP-20 decimal precision of this token
      */
     function initialize(
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint initialExchangeRateMantissa_,
         string memory name_,
@@ -326,11 +326,11 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         initialExchangeRateMantissa = initialExchangeRateMantissa_;
         require(initialExchangeRateMantissa > 0, "initial exchange rate must be greater than zero.");
 
-        // Set the comptroller
-        uint err = _setComptroller(comptroller_);
-        require(err == uint(Error.NO_ERROR), "setting comptroller failed");
+        // Set the controller
+        uint err = _setController(controller_);
+        require(err == uint(Error.NO_ERROR), "setting controller failed");
 
-        // Initialize block number and borrow index (block number mocks depend on comptroller being set)
+        // Initialize block number and borrow index (block number mocks depend on controller being set)
         accrualBlockNumber = getBlockNumber();
         borrowIndex = mantissaOne;
 
@@ -471,26 +471,26 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Sets a new comptroller for the market
-     * @dev Admin function to set a new comptroller
+     * @notice Sets a new controller for the market
+     * @dev Admin function to set a new controller
      * @return uint Returns 0 on success, otherwise returns a failure code (see ErrorReporter.sol for details).
      */
-    // @custom:event Emits NewComptroller event
-    function _setComptroller(ComptrollerInterface newComptroller) public returns (uint) {
+    // @custom:event Emits NewController event
+    function _setController(ControllerInterface newController) public returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_COMPTROLLER_OWNER_CHECK);
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_CONTROLLER_OWNER_CHECK);
         }
 
-        ComptrollerInterface oldComptroller = comptroller;
-        // Ensure invoke comptroller.isComptroller() returns true
-        require(newComptroller.isComptroller(), "marker method returned false");
+        ControllerInterface oldController = controller;
+        // Ensure invoke controller.isController() returns true
+        require(newController.isController(), "marker method returned false");
 
-        // Set market's comptroller to newComptroller
-        comptroller = newComptroller;
+        // Set market's controller to newController
+        controller = newController;
 
-        // Emit NewComptroller(oldComptroller, newComptroller)
-        emit NewComptroller(oldComptroller, newComptroller);
+        // Emit NewController(oldController, newController)
+        emit NewController(oldController, newController);
 
         return uint(Error.NO_ERROR);
     }
@@ -544,9 +544,9 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
      */
     function transferTokens(address spender, address src, address dst, uint tokens) internal returns (uint) {
         /* Fail if transfer not allowed */
-        uint allowed = comptroller.transferAllowed(address(this), src, dst, tokens);
+        uint allowed = controller.transferAllowed(address(this), src, dst, tokens);
         if (allowed != 0) {
-            return failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.TRANSFER_COMPTROLLER_REJECTION, allowed);
+            return failOpaque(Error.CONTROLLER_REJECTION, FailureInfo.TRANSFER_CONTROLLER_REJECTION, allowed);
         }
 
         /* Do not allow self-transfers */
@@ -598,7 +598,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         /* We emit a Transfer event */
         emit Transfer(src, dst, tokens);
 
-        comptroller.transferVerify(address(this), src, dst, tokens);
+        controller.transferVerify(address(this), src, dst, tokens);
 
         return uint(Error.NO_ERROR);
     }
@@ -628,9 +628,9 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
      */
     function mintFresh(address minter, uint mintAmount) internal returns (uint, uint) {
         /* Fail if mint not allowed */
-        uint allowed = comptroller.mintAllowed(address(this), minter, mintAmount);
+        uint allowed = controller.mintAllowed(address(this), minter, mintAmount);
         if (allowed != 0) {
-            return (failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.MINT_COMPTROLLER_REJECTION, allowed), 0);
+            return (failOpaque(Error.CONTROLLER_REJECTION, FailureInfo.MINT_CONTROLLER_REJECTION, allowed), 0);
         }
 
         /* Verify market's block number equals current block number */
@@ -651,7 +651,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          *  We call `doTransferIn` for the minter and the mintAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between BEP-20 and CORE underlying.
          *  `doTransferIn` reverts if anything goes wrong, since we can't be sure if
          *  side-effects occurred. The function returns the amount actually transferred,
          *  in case of a fee. On success, the vToken holds an additional `actualMintAmount`
@@ -690,7 +690,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         emit Transfer(address(this), minter, vars.mintTokens);
 
         /* We call the defense hook */
-        comptroller.mintVerify(address(this), minter, vars.actualMintAmount, vars.mintTokens);
+        controller.mintVerify(address(this), minter, vars.actualMintAmount, vars.mintTokens);
 
         return (uint(Error.NO_ERROR), vars.actualMintAmount);
     }
@@ -723,9 +723,9 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
     function mintBehalfFresh(address payer, address receiver, uint mintAmount) internal returns (uint, uint) {
         require(receiver != address(0), "receiver is invalid");
         /* Fail if mint not allowed */
-        uint allowed = comptroller.mintAllowed(address(this), receiver, mintAmount);
+        uint allowed = controller.mintAllowed(address(this), receiver, mintAmount);
         if (allowed != 0) {
-            return (failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.MINT_COMPTROLLER_REJECTION, allowed), 0);
+            return (failOpaque(Error.CONTROLLER_REJECTION, FailureInfo.MINT_CONTROLLER_REJECTION, allowed), 0);
         }
 
         /* Verify market's block number equals current block number */
@@ -746,7 +746,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          *  We call `doTransferIn` for the payer and the mintAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between BEP-20 and CORE underlying.
          *  `doTransferIn` reverts if anything goes wrong, since we can't be sure if
          *  side-effects occurred. The function returns the amount actually transferred,
          *  in case of a fee. On success, the vToken holds an additional `actualMintAmount`
@@ -785,7 +785,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         emit Transfer(address(this), receiver, vars.mintTokens);
 
         /* We call the defense hook */
-        comptroller.mintVerify(address(this), receiver, vars.actualMintAmount, vars.mintTokens);
+        controller.mintVerify(address(this), receiver, vars.actualMintAmount, vars.mintTokens);
 
         return (uint(Error.NO_ERROR), vars.actualMintAmount);
     }
@@ -877,7 +877,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         }
 
         /* Fail if redeem not allowed */
-        uint allowed = comptroller.redeemAllowed(address(this), redeemer, vars.redeemTokens);
+        uint allowed = controller.redeemAllowed(address(this), redeemer, vars.redeemTokens);
         if (allowed != 0) {
             revert("math error");
         }
@@ -917,17 +917,17 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We invoke doTransferOut for the redeemer and the redeemAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between BEP-20 and CORE underlying.
          *  On success, the vToken has redeemAmount less of cash.
          *  doTransferOut reverts if anything goes wrong, since we can't be sure if side effects occurred.
          */
 
         uint feeAmount;
         uint remainedAmount;
-        if (IComptroller(address(comptroller)).treasuryPercent() != 0) {
+        if (IController(address(controller)).treasuryPercent() != 0) {
             (vars.mathErr, feeAmount) = mulUInt(
                 vars.redeemAmount,
-                IComptroller(address(comptroller)).treasuryPercent()
+                IController(address(controller)).treasuryPercent()
             );
             if (vars.mathErr != MathError.NO_ERROR) {
                 revert("math error");
@@ -943,7 +943,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
                 revert("math error");
             }
 
-            doTransferOut(address(uint160(IComptroller(address(comptroller)).treasuryAddress())), feeAmount);
+            doTransferOut(address(uint160(IController(address(controller)).treasuryAddress())), feeAmount);
 
             emit RedeemFee(redeemer, feeAmount, vars.redeemTokens);
         } else {
@@ -957,7 +957,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         emit Redeem(redeemer, remainedAmount, vars.redeemTokens, vars.accountTokensNew);
 
         /* We call the defense hook */
-        comptroller.redeemVerify(address(this), redeemer, vars.redeemAmount, vars.redeemTokens);
+        controller.redeemVerify(address(this), redeemer, vars.redeemAmount, vars.redeemTokens);
 
         return uint(Error.NO_ERROR);
     }
@@ -993,7 +993,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
      */
     function borrowFresh(address borrower, address payable receiver, uint borrowAmount) internal returns (uint) {
         /* Fail if borrow not allowed */
-        uint allowed = comptroller.borrowAllowed(address(this), borrower, borrowAmount);
+        uint allowed = controller.borrowAllowed(address(this), borrower, borrowAmount);
         if (allowed != 0) {
             revert("math error");
         }
@@ -1041,7 +1041,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We invoke doTransferOut for the borrower and the borrowAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between BEP-20 and CORE underlying.
          *  On success, the vToken borrowAmount less of cash.
          *  doTransferOut reverts if anything goes wrong, since we can't be sure if side effects occurred.
          */
@@ -1051,7 +1051,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         emit Borrow(borrower, borrowAmount, vars.accountBorrowsNew, vars.totalBorrowsNew);
 
         /* We call the defense hook */
-        comptroller.borrowVerify(address(this), borrower, borrowAmount);
+        controller.borrowVerify(address(this), borrower, borrowAmount);
 
         return uint(Error.NO_ERROR);
     }
@@ -1096,10 +1096,10 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
      */
     function repayBorrowFresh(address payer, address borrower, uint repayAmount) internal returns (uint, uint) {
         /* Fail if repayBorrow not allowed */
-        uint allowed = comptroller.repayBorrowAllowed(address(this), payer, borrower, repayAmount);
+        uint allowed = controller.repayBorrowAllowed(address(this), payer, borrower, repayAmount);
         if (allowed != 0) {
             return (
-                failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.REPAY_BORROW_COMPTROLLER_REJECTION, allowed),
+                failOpaque(Error.CONTROLLER_REJECTION, FailureInfo.REPAY_BORROW_CONTROLLER_REJECTION, allowed),
                 0
             );
         }
@@ -1140,7 +1140,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We call doTransferIn for the payer and the repayAmount
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between BEP-20 and CORE underlying.
          *  On success, the vToken holds an additional repayAmount of cash.
          *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
          *   it returns the amount actually transferred, in case of a fee.
@@ -1167,7 +1167,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         emit RepayBorrow(payer, borrower, vars.actualRepayAmount, vars.accountBorrowsNew, vars.totalBorrowsNew);
 
         /* We call the defense hook */
-        comptroller.repayBorrowVerify(address(this), payer, borrower, vars.actualRepayAmount, vars.borrowerIndex);
+        controller.repayBorrowVerify(address(this), payer, borrower, vars.actualRepayAmount, vars.borrowerIndex);
 
         return (uint(Error.NO_ERROR), vars.actualRepayAmount);
     }
@@ -1218,7 +1218,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         VTokenInterface vTokenCollateral
     ) internal returns (uint, uint) {
         /* Fail if liquidate not allowed */
-        uint allowed = comptroller.liquidateBorrowAllowed(
+        uint allowed = controller.liquidateBorrowAllowed(
             address(this),
             address(vTokenCollateral),
             liquidator,
@@ -1226,7 +1226,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
             repayAmount
         );
         if (allowed != 0) {
-            return (failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.LIQUIDATE_COMPTROLLER_REJECTION, allowed), 0);
+            return (failOpaque(Error.CONTROLLER_REJECTION, FailureInfo.LIQUIDATE_CONTROLLER_REJECTION, allowed), 0);
         }
 
         /* Verify market's block number equals current block number */
@@ -1265,12 +1265,12 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         // (No safe failures beyond this point)
 
         /* We calculate the number of collateral tokens that will be seized */
-        (uint amountSeizeError, uint seizeTokens) = comptroller.liquidateCalculateSeizeTokens(
+        (uint amountSeizeError, uint seizeTokens) = controller.liquidateCalculateSeizeTokens(
             address(this),
             address(vTokenCollateral),
             actualRepayAmount
         );
-        require(amountSeizeError == uint(Error.NO_ERROR), "LIQUIDATE_COMPTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED");
+        require(amountSeizeError == uint(Error.NO_ERROR), "LIQUIDATE_CONTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED");
 
         /* Revert if borrower collateral token balance < seizeTokens */
         require(vTokenCollateral.balanceOf(borrower) >= seizeTokens, "LIQUIDATE_SEIZE_TOO_MUCH");
@@ -1290,7 +1290,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         emit LiquidateBorrow(liquidator, borrower, actualRepayAmount, address(vTokenCollateral), seizeTokens);
 
         /* We call the defense hook */
-        comptroller.liquidateBorrowVerify(
+        controller.liquidateBorrowVerify(
             address(this),
             address(vTokenCollateral),
             liquidator,
@@ -1319,9 +1319,9 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         uint seizeTokens
     ) internal returns (uint) {
         /* Fail if seize not allowed */
-        uint allowed = comptroller.seizeAllowed(address(this), seizerToken, liquidator, borrower, seizeTokens);
+        uint allowed = controller.seizeAllowed(address(this), seizerToken, liquidator, borrower, seizeTokens);
         if (allowed != 0) {
-            return failOpaque(Error.COMPTROLLER_REJECTION, FailureInfo.LIQUIDATE_SEIZE_COMPTROLLER_REJECTION, allowed);
+            return failOpaque(Error.CONTROLLER_REJECTION, FailureInfo.LIQUIDATE_SEIZE_CONTROLLER_REJECTION, allowed);
         }
 
         /* Fail if borrower = liquidator */
@@ -1360,7 +1360,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
         emit Transfer(borrower, liquidator, seizeTokens);
 
         /* We call the defense hook */
-        comptroller.seizeVerify(address(this), seizerToken, liquidator, borrower, seizeTokens);
+        controller.seizeVerify(address(this), seizerToken, liquidator, borrower, seizeTokens);
 
         return uint(Error.NO_ERROR);
     }
@@ -1433,7 +1433,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We call doTransferIn for the caller and the addAmount
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between BEP-20 and CORE underlying.
          *  On success, the vToken holds an additional addAmount of cash.
          *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
          *  it returns the amount actually transferred, in case of a fee.

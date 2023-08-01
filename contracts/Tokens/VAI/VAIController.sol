@@ -3,8 +3,8 @@ pragma solidity ^0.5.16;
 import "../../Oracle/PriceOracle.sol";
 import "../../Utils/ErrorReporter.sol";
 import "../../Utils/Exponential.sol";
-import "../../Comptroller/ComptrollerStorage.sol";
-import { Comptroller } from "../../Comptroller/Comptroller.sol";
+import "../../Controller/ControllerStorage.sol";
+import { Controller } from "../../Controller/Controller.sol";
 import "../../Governance/IAccessControlManager.sol";
 import "../VTokens/VToken.sol";
 import "./VAIControllerStorage.sol";
@@ -12,7 +12,7 @@ import "./VAIUnitroller.sol";
 import "./VAI.sol";
 
 /**
- * @title VAI Comptroller
+ * @title VAI Controller
  * @author Venus
  * @notice This is the implementation contract for the VAIUnitroller proxy
  */
@@ -20,8 +20,8 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
     /// @notice Initial index used in interest computations
     uint public constant INITIAL_VAI_MINT_INDEX = 1e18;
 
-    /// @notice Emitted when Comptroller is changed
-    event NewComptroller(Comptroller oldComptroller, Comptroller newComptroller);
+    /// @notice Emitted when Controller is changed
+    event NewController(Controller oldController, Controller newController);
 
     /// @notice Event emitted when VAI is minted
     event MintVAI(address minter, uint mintVAIAmount);
@@ -98,9 +98,9 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
      */
     // solhint-disable-next-line code-complexity
     function mintVAI(uint mintVAIAmount) external nonReentrant returns (uint) {
-        if (address(comptroller) != address(0)) {
+        if (address(controller) != address(0)) {
             require(mintVAIAmount > 0, "mintVAIAmount cannot be zero");
-            require(!Comptroller(address(comptroller)).protocolPaused(), "protocol is paused");
+            require(!Controller(address(controller)).protocolPaused(), "protocol is paused");
 
             accrueVAIInterest();
 
@@ -128,7 +128,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
             }
 
             // Calculate the minted balance based on interest index
-            uint totalMintedVAI = Comptroller(address(comptroller)).mintedVAIs(minter);
+            uint totalMintedVAI = Controller(address(controller)).mintedVAIs(minter);
 
             if (totalMintedVAI > 0) {
                 uint256 repayAmount = getVAIRepayAmount(minter);
@@ -149,7 +149,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
 
             (vars.mathErr, vars.accountMintVAINew) = addUInt(totalMintedVAI, mintVAIAmount);
             require(vars.mathErr == MathError.NO_ERROR, "VAI_MINT_AMOUNT_CALCULATION_FAILED");
-            uint error = comptroller.setMintedVAIOf(minter, vars.accountMintVAINew);
+            uint error = controller.setMintedVAIOf(minter, vars.accountMintVAINew);
             if (error != 0) {
                 return error;
             }
@@ -196,12 +196,12 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
      * @return 0 on success, otherwise an error code
      */
     function repayVAI(uint repayVAIAmount) external nonReentrant returns (uint, uint) {
-        if (address(comptroller) != address(0)) {
+        if (address(controller) != address(0)) {
             accrueVAIInterest();
 
             require(repayVAIAmount > 0, "repayVAIAmount cannt be zero");
 
-            require(!Comptroller(address(comptroller)).protocolPaused(), "protocol is paused");
+            require(!Controller(address(controller)).protocolPaused(), "protocol is paused");
 
             return repayVAIFresh(msg.sender, msg.sender, repayVAIAmount);
         }
@@ -227,7 +227,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
         bool success = VAI(getVAIAddress()).transferFrom(payer, receiver, partOfCurrentInterest);
         require(success == true, "failed to transfer VAI fee");
 
-        uint vaiBalanceBorrower = Comptroller(address(comptroller)).mintedVAIs(borrower);
+        uint vaiBalanceBorrower = Controller(address(controller)).mintedVAIs(borrower);
         uint accountVAINew;
 
         (mErr, accountVAINew) = subUInt(vaiBalanceBorrower, burn);
@@ -239,7 +239,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
         (mErr, pastVAIInterest[borrower]) = subUInt(pastVAIInterest[borrower], partOfPastInterest);
         require(mErr == MathError.NO_ERROR, "VAI_BURN_AMOUNT_CALCULATION_FAILED");
 
-        uint error = comptroller.setMintedVAIOf(borrower, accountVAINew);
+        uint error = controller.setMintedVAIOf(borrower, accountVAINew);
         if (error != 0) {
             return (error, 0);
         }
@@ -260,7 +260,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
         uint repayAmount,
         VTokenInterface vTokenCollateral
     ) external nonReentrant returns (uint, uint) {
-        require(!Comptroller(address(comptroller)).protocolPaused(), "protocol is paused");
+        require(!Controller(address(controller)).protocolPaused(), "protocol is paused");
 
         uint error = vTokenCollateral.accrueInterest();
         if (error != uint(Error.NO_ERROR)) {
@@ -287,11 +287,11 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
         uint repayAmount,
         VTokenInterface vTokenCollateral
     ) internal returns (uint, uint) {
-        if (address(comptroller) != address(0)) {
+        if (address(controller) != address(0)) {
             accrueVAIInterest();
 
             /* Fail if liquidate not allowed */
-            uint allowed = comptroller.liquidateBorrowAllowed(
+            uint allowed = controller.liquidateBorrowAllowed(
                 address(this),
                 address(vTokenCollateral),
                 liquidator,
@@ -299,7 +299,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
                 repayAmount
             );
             if (allowed != 0) {
-                return (failOpaque(Error.REJECTION, FailureInfo.VAI_LIQUIDATE_COMPTROLLER_REJECTION, allowed), 0);
+                return (failOpaque(Error.REJECTION, FailureInfo.VAI_LIQUIDATE_CONTROLLER_REJECTION, allowed), 0);
             }
 
             /* Verify vTokenCollateral market's block number equals current block number */
@@ -334,13 +334,13 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
             // (No safe failures beyond this point)
 
             /* We calculate the number of collateral tokens that will be seized */
-            (uint amountSeizeError, uint seizeTokens) = comptroller.liquidateVAICalculateSeizeTokens(
+            (uint amountSeizeError, uint seizeTokens) = controller.liquidateVAICalculateSeizeTokens(
                 address(vTokenCollateral),
                 actualRepayAmount
             );
             require(
                 amountSeizeError == uint(Error.NO_ERROR),
-                "VAI_LIQUIDATE_COMPTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED"
+                "VAI_LIQUIDATE_CONTROLLER_CALCULATE_AMOUNT_SEIZE_FAILED"
             );
 
             /* Revert if borrower collateral token balance < seizeTokens */
@@ -356,7 +356,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
             emit LiquidateVAI(liquidator, borrower, actualRepayAmount, address(vTokenCollateral), seizeTokens);
 
             /* We call the defense hook */
-            comptroller.liquidateBorrowVerify(
+            controller.liquidateBorrowVerify(
                 address(this),
                 address(vTokenCollateral),
                 liquidator,
@@ -372,19 +372,19 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
     /*** Admin Functions ***/
 
     /**
-     * @notice Sets a new comptroller
-     * @dev Admin function to set a new comptroller
+     * @notice Sets a new controller
+     * @dev Admin function to set a new controller
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setComptroller(Comptroller comptroller_) external returns (uint) {
+    function _setController(Controller controller_) external returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_COMPTROLLER_OWNER_CHECK);
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_CONTROLLER_OWNER_CHECK);
         }
 
-        Comptroller oldComptroller = comptroller;
-        comptroller = comptroller_;
-        emit NewComptroller(oldComptroller, comptroller_);
+        Controller oldController = controller;
+        controller = controller_;
+        emit NewController(oldController, controller_);
 
         return uint(Error.NO_ERROR);
     }
@@ -411,8 +411,8 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
 
     // solhint-disable-next-line code-complexity
     function getMintableVAI(address minter) public view returns (uint, uint) {
-        PriceOracle oracle = Comptroller(address(comptroller)).oracle();
-        VToken[] memory enteredMarkets = Comptroller(address(comptroller)).getAssetsIn(minter);
+        PriceOracle oracle = Controller(address(controller)).oracle();
+        VToken[] memory enteredMarkets = Controller(address(controller)).getAssetsIn(minter);
 
         AccountAmountLocalVars memory vars; // Holds all our calculation results
 
@@ -450,7 +450,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
                 return (uint(Error.MATH_ERROR), 0);
             }
 
-            (, uint collateralFactorMantissa, ) = Comptroller(address(comptroller)).markets(address(enteredMarkets[i]));
+            (, uint collateralFactorMantissa, ) = Controller(address(controller)).markets(address(enteredMarkets[i]));
             (vars.mErr, vars.marketSupply) = mulUInt(vars.marketSupply, collateralFactorMantissa);
             if (vars.mErr != MathError.NO_ERROR) {
                 return (uint(Error.MATH_ERROR), 0);
@@ -477,7 +477,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
             }
         }
 
-        uint totalMintedVAI = Comptroller(address(comptroller)).mintedVAIs(minter);
+        uint totalMintedVAI = Controller(address(controller)).mintedVAIs(minter);
         uint256 repayAmount = 0;
 
         if (totalMintedVAI > 0) {
@@ -489,7 +489,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
             return (uint(Error.MATH_ERROR), 0);
         }
 
-        (vars.mErr, accountMintableVAI) = mulUInt(vars.sumSupply, Comptroller(address(comptroller)).vaiMintRate());
+        (vars.mErr, accountMintableVAI) = mulUInt(vars.sumSupply, Controller(address(controller)).vaiMintRate());
         require(vars.mErr == MathError.NO_ERROR, "VAI_MINT_AMOUNT_CALCULATION_FAILED");
 
         (vars.mErr, accountMintableVAI) = divUInt(accountMintableVAI, 10000);
@@ -531,7 +531,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
     }
 
     function getVAIRepayRate() public view returns (uint) {
-        PriceOracle oracle = Comptroller(address(comptroller)).oracle();
+        PriceOracle oracle = Controller(address(controller)).oracle();
         MathError mErr;
 
         if (baseRateMantissa > 0) {
@@ -596,7 +596,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
         MathError mErr;
         uint delta;
 
-        uint amount = Comptroller(address(comptroller)).mintedVAIs(account);
+        uint amount = Controller(address(controller)).mintedVAIs(account);
         uint interest = pastVAIInterest[account];
         uint totalMintedVAI;
         uint newInterest;
@@ -630,7 +630,7 @@ contract VAIController is VAIControllerStorageG2, VAIControllerErrorReporter, Ex
         uint256 totalRepayAmount = getVAIRepayAmount(borrower);
         uint currentInterest;
 
-        (mErr, currentInterest) = subUInt(totalRepayAmount, Comptroller(address(comptroller)).mintedVAIs(borrower));
+        (mErr, currentInterest) = subUInt(totalRepayAmount, Controller(address(controller)).mintedVAIs(borrower));
         require(mErr == MathError.NO_ERROR, "VAI_BURN_AMOUNT_CALCULATION_FAILED");
 
         (mErr, currentInterest) = addUInt(pastVAIInterest[borrower], currentInterest);

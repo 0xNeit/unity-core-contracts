@@ -3,22 +3,22 @@ pragma experimental ABIEncoderV2;
 
 import "../Tokens/VTokens/VToken.sol";
 
-interface ComptrollerLensInterface {
+interface ControllerLensInterface {
     function liquidateCalculateSeizeTokens(
-        address comptroller,
+        address controller,
         address vTokenBorrowed,
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint);
 
     function liquidateVAICalculateSeizeTokens(
-        address comptroller,
+        address controller,
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint);
 
     function getHypotheticalAccountLiquidity(
-        address comptroller,
+        address controller,
         address account,
         VToken vTokenModify,
         uint redeemTokens,

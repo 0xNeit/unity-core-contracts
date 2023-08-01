@@ -11,7 +11,7 @@ interface IPriceOracle {
     function getUnderlyingPrice(IVToken vToken) external view returns (uint256);
 }
 
-interface IComptroller {
+interface IController {
     function oracle() external view returns (IPriceOracle);
 }
 
@@ -22,7 +22,7 @@ interface IVToken {
 
     function borrowBalanceCurrent(address account) external returns (uint256);
 
-    function comptroller() external view returns (IComptroller);
+    function controller() external view returns (IController);
 
     function underlying() external view returns (address);
 }
@@ -44,8 +44,8 @@ contract SwapDebtDelegate is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable
     ///   to their account
     event SweptTokens(address indexed token, uint256 amount);
 
-    /// @notice Thrown if VTokens' comptrollers are not equal
-    error ComptrollerMismatch();
+    /// @notice Thrown if VTokens' controllers are not equal
+    error ControllerMismatch();
 
     /// @notice Thrown if repayment fails with an error code
     error RepaymentFailed(uint256 errorCode);
@@ -143,11 +143,11 @@ contract SwapDebtDelegate is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable
      * @param amount The amount in convertFrom.underlying()
      */
     function _convert(IVToken convertFrom, IVToken convertTo, uint256 amount) internal view returns (uint256) {
-        IComptroller comptroller = convertFrom.comptroller();
-        if (comptroller != convertTo.comptroller()) {
-            revert ComptrollerMismatch();
+        IController controller = convertFrom.controller();
+        if (controller != convertTo.controller()) {
+            revert ControllerMismatch();
         }
-        IPriceOracle oracle = comptroller.oracle();
+        IPriceOracle oracle = controller.oracle();
 
         // Decimals are accounted for in the oracle contract
         uint256 scaledUsdValue = oracle.getUnderlyingPrice(convertFrom) * amount; // the USD value here has 36 decimals

@@ -3,14 +3,14 @@ pragma solidity ^0.5.16;
 import "./VToken.sol";
 
 /**
- * @title Venus's vBNB Contract
- * @notice vToken which wraps BNB
+ * @title Venus's vCORE Contract
+ * @notice vToken which wraps CORE
  * @author Venus
  */
-contract VBNB is VToken {
+contract VCORE is VToken {
     /**
-     * @notice Construct a new vBNB money market
-     * @param comptroller_ The address of the Comptroller
+     * @notice Construct a new vCORE money market
+     * @param controller_ The address of the Controller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
      * @param name_ BEP-20 name of this token
@@ -19,7 +19,7 @@ contract VBNB is VToken {
      * @param admin_ Address of the administrator of this token
      */
     constructor(
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint initialExchangeRateMantissa_,
         string memory name_,
@@ -30,14 +30,14 @@ contract VBNB is VToken {
         // Creator of the contract is admin during initialization
         admin = msg.sender;
 
-        initialize(comptroller_, interestRateModel_, initialExchangeRateMantissa_, name_, symbol_, decimals_);
+        initialize(controller_, interestRateModel_, initialExchangeRateMantissa_, name_, symbol_, decimals_);
 
         // Set the proper admin now that initialization is done
         admin = admin_;
     }
 
     /**
-     * @notice Send BNB to VBNB to mint
+     * @notice Send CORE to VCORE to mint
      */
     function() external payable {
         (uint err, ) = mintInternal(msg.value);
@@ -90,7 +90,9 @@ contract VBNB is VToken {
      */
     // @custom:event Emits Borrow event on success
     function borrow(uint borrowAmount) external returns (uint) {
-        return borrowInternal(borrowAmount);
+        address borrower = msg.sender;
+        address payable receiver = msg.sender;
+        return borrowInternal(borrower, receiver, borrowAmount);
     }
 
     /**
@@ -131,9 +133,9 @@ contract VBNB is VToken {
 
     /**
      * @notice Perform the actual transfer in, which is a no-op
-     * @param from Address sending the BNB
-     * @param amount Amount of BNB being sent
-     * @return The actual amount of BNB transferred
+     * @param from Address sending the CORE
+     * @param amount Amount of CORE being sent
+     * @return The actual amount of CORE transferred
      */
     function doTransferIn(address from, uint amount) internal returns (uint) {
         // Sanity checks
@@ -143,14 +145,14 @@ contract VBNB is VToken {
     }
 
     function doTransferOut(address payable to, uint amount) internal {
-        /* Send the BNB, with minimal gas and revert on failure */
+        /* Send the CORE, with minimal gas and revert on failure */
         to.transfer(amount);
     }
 
     /**
-     * @notice Gets balance of this contract in terms of BNB, before this message
+     * @notice Gets balance of this contract in terms of CORE, before this message
      * @dev This excludes the value of the current message, if any
-     * @return The quantity of BNB owned by this contract
+     * @return The quantity of CORE owned by this contract
      */
     function getCashPrior() internal view returns (uint) {
         (MathError err, uint startingBalance) = subUInt(address(this).balance, msg.value);

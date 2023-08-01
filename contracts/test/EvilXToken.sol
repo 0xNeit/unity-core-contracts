@@ -3,13 +3,13 @@ pragma solidity ^0.5.16;
 import "../Tokens/VTokens/VBep20Immutable.sol";
 import "../Tokens/VTokens/VBep20Delegator.sol";
 import "../Tokens/VTokens/VBep20Delegate.sol";
-import "./ComptrollerScenario.sol";
-import "../Comptroller/ComptrollerInterface.sol";
+import "./ControllerScenario.sol";
+import "../Controller/ControllerInterface.sol";
 
 contract VBep20Scenario is VBep20Immutable {
     constructor(
         address underlying_,
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint initialExchangeRateMantissa_,
         string memory name_,
@@ -20,7 +20,7 @@ contract VBep20Scenario is VBep20Immutable {
         public
         VBep20Immutable(
             underlying_,
-            comptroller_,
+            controller_,
             interestRateModel_,
             initialExchangeRateMantissa_,
             name_,
@@ -39,8 +39,8 @@ contract VBep20Scenario is VBep20Immutable {
     }
 
     function getBlockNumber() internal view returns (uint) {
-        ComptrollerScenario comptrollerScenario = ComptrollerScenario(address(comptroller));
-        return comptrollerScenario.blockNumber();
+        ControllerScenario controllerScenario = ControllerScenario(address(controller));
+        return controllerScenario.blockNumber();
     }
 }
 
@@ -55,12 +55,12 @@ contract EvilXToken is VBep20Delegate {
     uint internal harnessExchangeRate;
     bool internal harnessExchangeRateStored;
 
-    address public comptrollerAddress;
+    address public controllerAddress;
 
     mapping(address => bool) public failTransferToAddresses;
 
-    function setComptrollerAddress(address _comptrollerAddress) external {
-        comptrollerAddress = _comptrollerAddress;
+    function setControllerAddress(address _controllerAddress) external {
+        controllerAddress = _controllerAddress;
     }
 
     function exchangeRateStoredInternal() internal view returns (MathError, uint) {
@@ -76,7 +76,7 @@ contract EvilXToken is VBep20Delegate {
 
         // Checking the Liquidity of the user after the tranfer.
         // solhint-disable-next-line no-unused-vars
-        (uint errorCode, uint liquidity, uint shortfall) = ComptrollerInterface(comptrollerAddress).getAccountLiquidity(
+        (uint errorCode, uint liquidity, uint shortfall) = ControllerInterface(controllerAddress).getAccountLiquidity(
             msg.sender
         );
         emit LogLiquidity(liquidity);
@@ -205,6 +205,6 @@ contract EvilXToken is VBep20Delegate {
     }
 
     function harnessCallBorrowAllowed(uint amount) public returns (uint) {
-        return comptroller.borrowAllowed(address(this), msg.sender, amount);
+        return controller.borrowAllowed(address(this), msg.sender, amount);
     }
 }

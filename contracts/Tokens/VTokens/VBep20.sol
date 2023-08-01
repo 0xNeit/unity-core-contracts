@@ -77,14 +77,14 @@ contract VBep20 is VToken, VBep20Interface {
 
     /**
      * @notice Sender borrows assets on behalf of some other address. This function is only available
-     *   for senders, explicitly marked as delegates of the borrower using `comptroller.updateDelegate`
+     *   for senders, explicitly marked as delegates of the borrower using `controller.updateDelegate`
      * @param borrower The borrower, on behalf of whom to borrow.
      * @param borrowAmount The amount of the underlying asset to borrow
      * @return uint Returns 0 on success, otherwise returns a failure code (see ErrorReporter.sol for details).
      */
     // @custom:event Emits Borrow event on success
     function borrowBehalf(address borrower, uint borrowAmount) external returns (uint) {
-        require(comptroller.approvedDelegates(borrower, msg.sender), "not an approved delegate");
+        require(controller.approvedDelegates(borrower, msg.sender), "not an approved delegate");
         address payable receiver = msg.sender;
         return borrowInternal(borrower, receiver, borrowAmount);
     }
@@ -143,7 +143,7 @@ contract VBep20 is VToken, VBep20Interface {
     /**
      * @notice Initialize the new money market
      * @param underlying_ The address of the underlying asset
-     * @param comptroller_ The address of the Comptroller
+     * @param controller_ The address of the Controller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
      * @param name_ BEP-20 name of this token
@@ -152,7 +152,7 @@ contract VBep20 is VToken, VBep20Interface {
      */
     function initialize(
         address underlying_,
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint initialExchangeRateMantissa_,
         string memory name_,
@@ -160,7 +160,7 @@ contract VBep20 is VToken, VBep20Interface {
         uint8 decimals_
     ) public {
         // VToken initialize does the bulk of the work
-        super.initialize(comptroller_, interestRateModel_, initialExchangeRateMantissa_, name_, symbol_, decimals_);
+        super.initialize(controller_, interestRateModel_, initialExchangeRateMantissa_, name_, symbol_, decimals_);
 
         // Set underlying and sanity check it
         underlying = underlying_;

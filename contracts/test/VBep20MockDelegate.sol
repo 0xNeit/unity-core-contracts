@@ -14,7 +14,7 @@ contract VBep20MockDelegate is VToken, VBep20Interface {
     /**
      * @notice Initialize the new money market
      * @param underlying_ The address of the underlying asset
-     * @param comptroller_ The address of the Comptroller
+     * @param controller_ The address of the Controller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
      * @param name_ BEP-20 name of this token
@@ -23,7 +23,7 @@ contract VBep20MockDelegate is VToken, VBep20Interface {
      */
     function initialize(
         address underlying_,
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint initialExchangeRateMantissa_,
         string memory name_,
@@ -31,7 +31,7 @@ contract VBep20MockDelegate is VToken, VBep20Interface {
         uint8 decimals_
     ) public {
         // VToken initialize does the bulk of the work
-        super.initialize(comptroller_, interestRateModel_, initialExchangeRateMantissa_, name_, symbol_, decimals_);
+        super.initialize(controller_, interestRateModel_, initialExchangeRateMantissa_, name_, symbol_, decimals_);
 
         // Set underlying and sanity check it
         underlying = underlying_;

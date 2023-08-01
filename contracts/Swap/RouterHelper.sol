@@ -5,7 +5,7 @@ pragma solidity 0.8.13;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./lib/PancakeLibrary.sol";
-import "./interfaces/IWBNB.sol";
+import "./interfaces/IWCORE.sol";
 import "./lib/TransferHelper.sol";
 
 import "./interfaces/CustomErrors.sol";
@@ -18,9 +18,9 @@ abstract contract RouterHelper is IRouterHelper {
         SUPPORTING_FEE
     }
 
-    /// @notice Address of WBNB contract.
+    /// @notice Address of WCORE contract.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    address public immutable WBNB;
+    address public immutable WCORE;
 
     /// @notice Address of pancake swap factory contract.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -35,24 +35,24 @@ abstract contract RouterHelper is IRouterHelper {
     /// @notice This event is emitted whenever a successful swap (tokenA -> tokenB) occurs
     event SwapTokensForTokensAtSupportingFee(address indexed swapper, address[] indexed path);
 
-    /// @notice This event is emitted whenever a successful swap (BNB -> token) occurs
-    event SwapBnbForTokens(address indexed swapper, address[] indexed path, uint256[] indexed amounts);
+    /// @notice This event is emitted whenever a successful swap (CORE -> token) occurs
+    event SwapCoreForTokens(address indexed swapper, address[] indexed path, uint256[] indexed amounts);
 
-    /// @notice This event is emitted whenever a successful swap (BNB -> token) occurs
-    event SwapBnbForTokensAtSupportingFee(address indexed swapper, address[] indexed path);
+    /// @notice This event is emitted whenever a successful swap (CORE -> token) occurs
+    event SwapCoreForTokensAtSupportingFee(address indexed swapper, address[] indexed path);
 
-    /// @notice This event is emitted whenever a successful swap (token -> BNB) occurs
-    event SwapTokensForBnb(address indexed swapper, address[] indexed path, uint256[] indexed amounts);
+    /// @notice This event is emitted whenever a successful swap (token -> CORE) occurs
+    event SwapTokensForCore(address indexed swapper, address[] indexed path, uint256[] indexed amounts);
 
-    /// @notice This event is emitted whenever a successful swap (token -> BNB) occurs
-    event SwapTokensForBnbAtSupportingFee(address indexed swapper, address[] indexed path);
+    /// @notice This event is emitted whenever a successful swap (token -> CORE) occurs
+    event SwapTokensForCoreAtSupportingFee(address indexed swapper, address[] indexed path);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address WBNB_, address factory_) {
-        if (WBNB_ == address(0) || factory_ == address(0)) {
+    constructor(address WCORE_, address factory_) {
+        if (WCORE_ == address(0) || factory_ == address(0)) {
             revert ZeroAddress();
         }
-        WBNB = WBNB_;
+        WCORE = WCORE_;
         factory = factory_;
     }
 
@@ -148,58 +148,58 @@ abstract contract RouterHelper is IRouterHelper {
     }
 
     /**
-     * @notice Swap exact BNB for token
+     * @notice Swap exact CORE for token
      * @param amountOutMin Minimum amount of tokens to receive.
      * @param path Array with addresses of the underlying assets to be swapped
      * @param to Recipient of the output tokens.
      * @param swapFor TypesOfTokens, either supporing fee or non supporting fee
      * @return amounts Array of amounts after performing swap for respective pairs in path
      */
-    function _swapExactBNBForTokens(
+    function _swapExactCOREForTokens(
         uint256 amountOutMin,
         address[] calldata path,
         address to,
         TypesOfTokens swapFor
     ) internal returns (uint256[] memory amounts) {
-        address wBNBAddress = WBNB;
-        if (path[0] != wBNBAddress) {
-            revert WrongAddress(wBNBAddress, path[0]);
+        address wCOREAddress = WCORE;
+        if (path[0] != wCOREAddress) {
+            revert WrongAddress(wCOREAddress, path[0]);
         }
-        IWBNB(wBNBAddress).deposit{ value: msg.value }();
-        TransferHelper.safeTransfer(wBNBAddress, PancakeLibrary.pairFor(factory, path[0], path[1]), msg.value);
+        IWCORE(wCOREAddress).deposit{ value: msg.value }();
+        TransferHelper.safeTransfer(wCOREAddress, PancakeLibrary.pairFor(factory, path[0], path[1]), msg.value);
         if (swapFor == TypesOfTokens.NON_SUPPORTING_FEE) {
             amounts = PancakeLibrary.getAmountsOut(factory, msg.value, path);
             if (amounts[amounts.length - 1] < amountOutMin) {
                 revert OutputAmountBelowMinimum(amounts[amounts.length - 1], amountOutMin);
             }
             _swap(amounts, path, to);
-            emit SwapBnbForTokens(msg.sender, path, amounts);
+            emit SwapCoreForTokens(msg.sender, path, amounts);
         } else {
             _swapSupportingFeeOnTransferTokens(path, to);
-            emit SwapBnbForTokensAtSupportingFee(msg.sender, path);
+            emit SwapCoreForTokensAtSupportingFee(msg.sender, path);
         }
     }
 
     /**
-     * @notice Swap token A for BNB
+     * @notice Swap token A for CORE
      * @param amountIn The amount of tokens to swap.
-     * @param amountOutMin Minimum amount of BNB to receive.
+     * @param amountOutMin Minimum amount of CORE to receive.
      * @param path Array with addresses of the underlying assets to be swapped
      * @param to Recipient of the output tokens.
      * @param swapFor TypesOfTokens, either supporing fee or non supporting fee
      * @return amounts Array of amounts after performing swap for respective pairs in path
      */
-    function _swapExactTokensForBNB(
+    function _swapExactTokensForCORE(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
         address to,
         TypesOfTokens swapFor
     ) internal returns (uint256[] memory amounts) {
-        if (path[path.length - 1] != WBNB) {
-            revert WrongAddress(WBNB, path[path.length - 1]);
+        if (path[path.length - 1] != WCORE) {
+            revert WrongAddress(WCORE, path[path.length - 1]);
         }
-        uint256 WBNBAmount;
+        uint256 WCOREAmount;
         if (swapFor == TypesOfTokens.NON_SUPPORTING_FEE) {
             amounts = PancakeLibrary.getAmountsOut(factory, amountIn, path);
             if (amounts[amounts.length - 1] < amountOutMin) {
@@ -212,9 +212,9 @@ abstract contract RouterHelper is IRouterHelper {
                 amounts[0]
             );
             _swap(amounts, path, address(this));
-            WBNBAmount = amounts[amounts.length - 1];
+            WCOREAmount = amounts[amounts.length - 1];
         } else {
-            uint256 balanceBefore = IWBNB(WBNB).balanceOf(address(this));
+            uint256 balanceBefore = IWCORE(WCORE).balanceOf(address(this));
             TransferHelper.safeTransferFrom(
                 path[0],
                 msg.sender,
@@ -222,17 +222,17 @@ abstract contract RouterHelper is IRouterHelper {
                 amountIn
             );
             _swapSupportingFeeOnTransferTokens(path, address(this));
-            uint256 balanceAfter = IWBNB(WBNB).balanceOf(address(this));
-            WBNBAmount = balanceAfter - balanceBefore;
+            uint256 balanceAfter = IWCORE(WCORE).balanceOf(address(this));
+            WCOREAmount = balanceAfter - balanceBefore;
         }
-        IWBNB(WBNB).withdraw(WBNBAmount);
+        IWCORE(WCORE).withdraw(WCOREAmount);
         if (to != address(this)) {
-            TransferHelper.safeTransferBNB(to, WBNBAmount);
+            TransferHelper.safeTransferCORE(to, WCOREAmount);
         }
         if (swapFor == TypesOfTokens.NON_SUPPORTING_FEE) {
-            emit SwapTokensForBnb(msg.sender, path, amounts);
+            emit SwapTokensForCore(msg.sender, path, amounts);
         } else {
-            emit SwapTokensForBnbAtSupportingFee(msg.sender, path);
+            emit SwapTokensForCoreAtSupportingFee(msg.sender, path);
         }
     }
 
@@ -265,48 +265,48 @@ abstract contract RouterHelper is IRouterHelper {
     }
 
     /**
-     * @notice Swap BNB for exact amount of token B
+     * @notice Swap CORE for exact amount of token B
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param path Array with addresses of the underlying assets to be swapped
      * @param to Recipient of the output tokens.
      * @return amounts Array of amounts after performing swap for respective pairs in path
      **/
-    function _swapBNBForExactTokens(
+    function _swapCOREForExactTokens(
         uint256 amountOut,
         address[] calldata path,
         address to
     ) internal returns (uint256[] memory amounts) {
-        if (path[0] != WBNB) {
-            revert WrongAddress(WBNB, path[0]);
+        if (path[0] != WCORE) {
+            revert WrongAddress(WCORE, path[0]);
         }
         amounts = PancakeLibrary.getAmountsIn(factory, amountOut, path);
         if (amounts[0] > msg.value) {
             revert ExcessiveInputAmount(amounts[0], msg.value);
         }
-        IWBNB(WBNB).deposit{ value: amounts[0] }();
-        TransferHelper.safeTransfer(WBNB, PancakeLibrary.pairFor(factory, path[0], path[1]), amounts[0]);
+        IWCORE(WCORE).deposit{ value: amounts[0] }();
+        TransferHelper.safeTransfer(WCORE, PancakeLibrary.pairFor(factory, path[0], path[1]), amounts[0]);
         _swap(amounts, path, to);
-        // refund dust BNB, if any
-        if (msg.value > amounts[0]) TransferHelper.safeTransferBNB(msg.sender, msg.value - amounts[0]);
-        emit SwapBnbForTokens(msg.sender, path, amounts);
+        // refund dust CORE, if any
+        if (msg.value > amounts[0]) TransferHelper.safeTransferCORE(msg.sender, msg.value - amounts[0]);
+        emit SwapCoreForTokens(msg.sender, path, amounts);
     }
 
     /**
-     * @notice Swap token A for exact BNB
+     * @notice Swap token A for exact CORE
      * @param amountOut The amount of the tokens needs to be as output token.
      * @param amountInMax The maximum amount of input tokens that can be taken for the transaction not to revert.
      * @param path Array with addresses of the underlying assets to be swapped
      * @param to Recipient of the output tokens.
      * @return amounts Array of amounts after performing swap for respective pairs in path
      **/
-    function _swapTokensForExactBNB(
+    function _swapTokensForExactCORE(
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
         address to
     ) internal returns (uint256[] memory amounts) {
-        if (path[path.length - 1] != WBNB) {
-            revert WrongAddress(WBNB, path[path.length - 1]);
+        if (path[path.length - 1] != WCORE) {
+            revert WrongAddress(WCORE, path[path.length - 1]);
         }
         amounts = PancakeLibrary.getAmountsIn(factory, amountOut, path);
         if (amounts[0] > amountInMax) {
@@ -319,11 +319,11 @@ abstract contract RouterHelper is IRouterHelper {
             amounts[0]
         );
         _swap(amounts, path, address(this));
-        IWBNB(WBNB).withdraw(amounts[amounts.length - 1]);
+        IWCORE(WCORE).withdraw(amounts[amounts.length - 1]);
         if (to != address(this)) {
-            TransferHelper.safeTransferBNB(to, amounts[amounts.length - 1]);
+            TransferHelper.safeTransferCORE(to, amounts[amounts.length - 1]);
         }
-        emit SwapTokensForBnb(msg.sender, path, amounts);
+        emit SwapTokensForCore(msg.sender, path, amounts);
     }
 
     // **** LIBRARY FUNCTIONS ****

@@ -1,13 +1,15 @@
 pragma solidity ^0.5.16;
 
-import "../Comptroller/Comptroller.sol";
+import "../Controller/ControllerG1.sol";
 
-contract ComptrollerScenario is Comptroller {
+contract ControllerScenarioG1 is ControllerG1 {
     uint public blockNumber;
     address public xvsAddress;
     address public vaiAddress;
+    /// @notice Supply caps enforced by mintAllowed for each vToken address. Defaults to zero which corresponds to minting notAllowed
+    mapping(address => uint) public supplyCaps;
 
-    constructor() public Comptroller() {}
+    constructor() public ControllerG1() {}
 
     function setXVSAddress(address xvsAddress_) public {
         xvsAddress = xvsAddress_;
@@ -67,34 +69,21 @@ contract ComptrollerScenario is Comptroller {
     }
 
     /**
-     * @notice Recalculate and update XVS speeds for all XVS markets
+     * @notice Set the given supply caps for the given vToken markets. Supply that brings total Supply to or above supply cap will revert.
+     * @dev Admin function to set the supply caps. A supply cap of 0 corresponds to Minting NotAllowed.
+     * @param vTokens The addresses of the markets (tokens) to change the supply caps for
+     * @param newSupplyCaps The new supply cap values in underlying to be set. A value of 0 corresponds to Minting NotAllowed.
      */
-    function refreshVenusSpeeds() public {
-        VToken[] memory allMarkets_ = allMarkets;
+    function _setMarketSupplyCaps(VToken[] calldata vTokens, uint[] calldata newSupplyCaps) external {
+        require(msg.sender == admin, "only admin can set supply caps");
 
-        for (uint i = 0; i < allMarkets_.length; i++) {
-            VToken vToken = allMarkets_[i];
-            Exp memory borrowIndex = Exp({ mantissa: vToken.borrowIndex() });
-            updateVenusSupplyIndex(address(vToken));
-            updateVenusBorrowIndex(address(vToken), borrowIndex);
-        }
+        uint numMarkets = vTokens.length;
+        uint numSupplyCaps = newSupplyCaps.length;
 
-        Exp memory totalUtility = Exp({ mantissa: 0 });
-        Exp[] memory utilities = new Exp[](allMarkets_.length);
-        for (uint i = 0; i < allMarkets_.length; i++) {
-            VToken vToken = allMarkets_[i];
-            if (venusSpeeds[address(vToken)] > 0) {
-                Exp memory assetPrice = Exp({ mantissa: oracle.getUnderlyingPrice(vToken) });
-                Exp memory utility = mul_(assetPrice, vToken.totalBorrows());
-                utilities[i] = utility;
-                totalUtility = add_(totalUtility, utility);
-            }
-        }
+        require(numMarkets != 0 && numMarkets == numSupplyCaps, "invalid input");
 
-        for (uint i = 0; i < allMarkets_.length; i++) {
-            VToken vToken = allMarkets[i];
-            uint newSpeed = totalUtility.mantissa > 0 ? mul_(venusRate, div_(utilities[i], totalUtility)) : 0;
-            setVenusSpeedInternal(vToken, newSpeed, newSpeed);
+        for (uint i = 0; i < numMarkets; i++) {
+            supplyCaps[address(vTokens[i])] = newSupplyCaps[i];
         }
     }
 }

@@ -8,7 +8,7 @@ contract SimplePriceOracle is PriceOracle {
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
 
     function getUnderlyingPrice(VToken vToken) public view returns (uint) {
-        if (compareStrings(vToken.symbol(), "vBNB")) {
+        if (compareStrings(vToken.symbol(), "vCORE")) {
             return 1e18;
         } else if (compareStrings(vToken.symbol(), "VAI")) {
             return prices[address(vToken)];

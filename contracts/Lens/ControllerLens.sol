@@ -6,16 +6,16 @@ import "../Tokens/VTokens/VToken.sol";
 import "../Tokens/EIP20Interface.sol";
 import "../Oracle/PriceOracle.sol";
 import "../Utils/ErrorReporter.sol";
-import "../Comptroller/Comptroller.sol";
+import "../Controller/Controller.sol";
 import "../Tokens/VAI/VAIControllerInterface.sol";
 
 /**
- * @title ComptrollerLens Contract
+ * @title ControllerLens Contract
  * @author Venus
- * @notice The ComptrollerLens contract has functions to get the number of tokens that
+ * @notice The ControllerLens contract has functions to get the number of tokens that
  * can be seized through liquidation, hypothetical account liquidity and shortfall of an account.
  */
-contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, ExponentialNoError {
+contract ControllerLens is ControllerLensInterface, ControllerErrorReporter, ExponentialNoError {
     /**
      * @dev Local vars for avoiding stack-depth limits in calculating account liquidity.
      *  Note that `vTokenBalance` is the number of vTokens the account owns in the market,
@@ -36,21 +36,21 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
 
     /**
      * @notice Computes the number of collateral tokens to be seized in a liquidation event
-     * @param comptroller Address of comptroller
+     * @param controller Address of controller
      * @param vTokenBorrowed Address of the borrowed vToken
      * @param vTokenCollateral Address of collateral for the borrow
      * @param actualRepayAmount Repayment amount i.e amount to be repaid of total borrowed amount
      * @return A tuple of error code, and tokens to seize
      */
     function liquidateCalculateSeizeTokens(
-        address comptroller,
+        address controller,
         address vTokenBorrowed,
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint) {
         /* Read oracle prices for borrowed and collateral markets */
-        uint priceBorrowedMantissa = Comptroller(comptroller).oracle().getUnderlyingPrice(VToken(vTokenBorrowed));
-        uint priceCollateralMantissa = Comptroller(comptroller).oracle().getUnderlyingPrice(VToken(vTokenCollateral));
+        uint priceBorrowedMantissa = Controller(controller).oracle().getUnderlyingPrice(VToken(vTokenBorrowed));
+        uint priceCollateralMantissa = Controller(controller).oracle().getUnderlyingPrice(VToken(vTokenCollateral));
         if (priceBorrowedMantissa == 0 || priceCollateralMantissa == 0) {
             return (uint(Error.PRICE_ERROR), 0);
         }
@@ -68,7 +68,7 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
         Exp memory ratio;
 
         numerator = mul_(
-            Exp({ mantissa: Comptroller(comptroller).liquidationIncentiveMantissa() }),
+            Exp({ mantissa: Controller(controller).liquidationIncentiveMantissa() }),
             Exp({ mantissa: priceBorrowedMantissa })
         );
         denominator = mul_(Exp({ mantissa: priceCollateralMantissa }), Exp({ mantissa: exchangeRateMantissa }));
@@ -81,19 +81,19 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
 
     /**
      * @notice Computes the number of VAI tokens to be seized in a liquidation event
-     * @param comptroller Address of comptroller
+     * @param controller Address of controller
      * @param vTokenCollateral Address of collateral for vToken
      * @param actualRepayAmount Repayment amount i.e amount to be repaid of the total borrowed amount
      * @return A tuple of error code, and tokens to seize
      */
     function liquidateVAICalculateSeizeTokens(
-        address comptroller,
+        address controller,
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint) {
         /* Read oracle prices for borrowed and collateral markets */
         uint priceBorrowedMantissa = 1e18; // Note: this is VAI
-        uint priceCollateralMantissa = Comptroller(comptroller).oracle().getUnderlyingPrice(VToken(vTokenCollateral));
+        uint priceCollateralMantissa = Controller(controller).oracle().getUnderlyingPrice(VToken(vTokenCollateral));
         if (priceCollateralMantissa == 0) {
             return (uint(Error.PRICE_ERROR), 0);
         }
@@ -111,7 +111,7 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
         Exp memory ratio;
 
         numerator = mul_(
-            Exp({ mantissa: Comptroller(comptroller).liquidationIncentiveMantissa() }),
+            Exp({ mantissa: Controller(controller).liquidationIncentiveMantissa() }),
             Exp({ mantissa: priceBorrowedMantissa })
         );
         denominator = mul_(Exp({ mantissa: priceCollateralMantissa }), Exp({ mantissa: exchangeRateMantissa }));
@@ -125,7 +125,7 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
     /**
      * @notice Computes the hypothetical liquidity and shortfall of an account given a hypothetical borrow
      *      A snapshot of the account is taken and the total borrow amount of the account is calculated
-     * @param comptroller Address of comptroller
+     * @param controller Address of controller
      * @param account Address of the borrowed vToken
      * @param vTokenModify Address of collateral for vToken
      * @param redeemTokens Number of vTokens being redeemed
@@ -133,7 +133,7 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
      * @return Returns a tuple of error code, liquidity, and shortfall
      */
     function getHypotheticalAccountLiquidity(
-        address comptroller,
+        address controller,
         address account,
         VToken vTokenModify,
         uint redeemTokens,
@@ -143,7 +143,7 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
         uint oErr;
 
         // For each asset the account is in
-        VToken[] memory assets = Comptroller(comptroller).getAssetsIn(account);
+        VToken[] memory assets = Controller(controller).getAssetsIn(account);
         uint assetsCount = assets.length;
         for (uint i = 0; i < assetsCount; ++i) {
             VToken asset = assets[i];
@@ -156,18 +156,18 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
                 // semi-opaque error code, we assume NO_ERROR == 0 is invariant between upgrades
                 return (uint(Error.SNAPSHOT_ERROR), 0, 0);
             }
-            (, uint collateralFactorMantissa, ) = Comptroller(comptroller).markets(address(asset));
+            (, uint collateralFactorMantissa, ) = Controller(controller).markets(address(asset));
             vars.collateralFactor = Exp({ mantissa: collateralFactorMantissa });
             vars.exchangeRate = Exp({ mantissa: vars.exchangeRateMantissa });
 
             // Get the normalized price of the asset
-            vars.oraclePriceMantissa = Comptroller(comptroller).oracle().getUnderlyingPrice(asset);
+            vars.oraclePriceMantissa = Controller(controller).oracle().getUnderlyingPrice(asset);
             if (vars.oraclePriceMantissa == 0) {
                 return (uint(Error.PRICE_ERROR), 0, 0);
             }
             vars.oraclePrice = Exp({ mantissa: vars.oraclePriceMantissa });
 
-            // Pre-compute a conversion factor from tokens -> bnb (normalized price value)
+            // Pre-compute a conversion factor from tokens -> core (normalized price value)
             vars.tokensToDenom = mul_(mul_(vars.collateralFactor, vars.exchangeRate), vars.oraclePrice);
 
             // sumCollateral += tokensToDenom * vTokenBalance
@@ -200,7 +200,7 @@ contract ComptrollerLens is ComptrollerLensInterface, ComptrollerErrorReporter, 
             }
         }
 
-        VAIControllerInterface vaiController = Comptroller(comptroller).vaiController();
+        VAIControllerInterface vaiController = Controller(controller).vaiController();
 
         if (address(vaiController) != address(0)) {
             vars.sumBorrowPlusEffects = add_(vars.sumBorrowPlusEffects, vaiController.getVAIRepayAmount(account));

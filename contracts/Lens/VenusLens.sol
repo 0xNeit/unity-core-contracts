@@ -7,7 +7,7 @@ import "../Oracle/PriceOracle.sol";
 import "../Tokens/EIP20Interface.sol";
 import "../Governance/GovernorAlpha.sol";
 import "../Tokens/XVS/XVS.sol";
-import "../Comptroller/ComptrollerInterface.sol";
+import "../Controller/ControllerInterface.sol";
 import "../Utils/SafeMath.sol";
 
 contract VenusLens is ExponentialNoError {
@@ -136,13 +136,13 @@ contract VenusLens is ExponentialNoError {
      */
     function vTokenMetadata(VToken vToken) public returns (VTokenMetadata memory) {
         uint exchangeRateCurrent = vToken.exchangeRateCurrent();
-        address comptrollerAddress = address(vToken.comptroller());
-        ComptrollerInterface comptroller = ComptrollerInterface(comptrollerAddress);
-        (bool isListed, uint collateralFactorMantissa) = comptroller.markets(address(vToken));
+        address controllerAddress = address(vToken.controller());
+        ControllerInterface controller = ControllerInterface(controllerAddress);
+        (bool isListed, uint collateralFactorMantissa) = controller.markets(address(vToken));
         address underlyingAssetAddress;
         uint underlyingDecimals;
 
-        if (compareStrings(vToken.symbol(), "vBNB")) {
+        if (compareStrings(vToken.symbol(), "vCORE")) {
             underlyingAssetAddress = address(0);
             underlyingDecimals = 18;
         } else {
@@ -151,8 +151,8 @@ contract VenusLens is ExponentialNoError {
             underlyingDecimals = EIP20Interface(vBep20.underlying()).decimals();
         }
 
-        uint venusSupplySpeedPerBlock = comptroller.venusSupplySpeeds(address(vToken));
-        uint venusBorrowSpeedPerBlock = comptroller.venusBorrowSpeeds(address(vToken));
+        uint venusSupplySpeedPerBlock = controller.venusSupplySpeeds(address(vToken));
+        uint venusBorrowSpeedPerBlock = controller.venusBorrowSpeeds(address(vToken));
 
         return
             VTokenMetadata({
@@ -194,12 +194,12 @@ contract VenusLens is ExponentialNoError {
     /**
      * @notice Get amount of XVS distributed daily to an account
      * @param account Address of account to fetch the daily XVS distribution
-     * @param comptrollerAddress Address of the comptroller proxy
+     * @param controllerAddress Address of the controller proxy
      * @return Amount of XVS distributed daily to an account
      */
-    function getDailyXVS(address payable account, address comptrollerAddress) external returns (uint) {
-        ComptrollerInterface comptrollerInstance = ComptrollerInterface(comptrollerAddress);
-        VToken[] memory vTokens = comptrollerInstance.getAllMarkets();
+    function getDailyXVS(address payable account, address controllerAddress) external returns (uint) {
+        ControllerInterface controllerInstance = ControllerInterface(controllerAddress);
+        VToken[] memory vTokens = controllerInstance.getAllMarkets();
         uint dailyXvsPerAccount = 0;
 
         for (uint i = 0; i < vTokens.length; i++) {
@@ -253,7 +253,7 @@ contract VenusLens is ExponentialNoError {
         uint tokenBalance;
         uint tokenAllowance;
 
-        if (compareStrings(vToken.symbol(), "vBNB")) {
+        if (compareStrings(vToken.symbol(), "vCORE")) {
             tokenBalance = account.balance;
             tokenAllowance = account.balance;
         } else {
@@ -298,8 +298,8 @@ contract VenusLens is ExponentialNoError {
      * @return response struct with underlyingPrice info of vToken
      */
     function vTokenUnderlyingPrice(VToken vToken) public view returns (VTokenUnderlyingPrice memory) {
-        ComptrollerInterface comptroller = ComptrollerInterface(address(vToken.comptroller()));
-        PriceOracle priceOracle = comptroller.oracle();
+        ControllerInterface controller = ControllerInterface(address(vToken.controller()));
+        PriceOracle priceOracle = controller.oracle();
 
         return
             VTokenUnderlyingPrice({ vToken: address(vToken), underlyingPrice: priceOracle.getUnderlyingPrice(vToken) });
@@ -323,18 +323,18 @@ contract VenusLens is ExponentialNoError {
 
     /**
      * @notice Query the account liquidity and shortfall of an account
-     * @param comptroller Address of comptroller proxy
+     * @param controller Address of controller proxy
      * @param account Address of the account to query
      * @return Struct with markets user has entered, liquidity, and shortfall of the account
      */
     function getAccountLimits(
-        ComptrollerInterface comptroller,
+        ControllerInterface controller,
         address account
     ) public view returns (AccountLimits memory) {
-        (uint errorCode, uint liquidity, uint shortfall) = comptroller.getAccountLiquidity(account);
+        (uint errorCode, uint liquidity, uint shortfall) = controller.getAccountLiquidity(account);
         require(errorCode == 0, "account liquidity error");
 
-        return AccountLimits({ markets: comptroller.getAssetsIn(account), liquidity: liquidity, shortfall: shortfall });
+        return AccountLimits({ markets: controller.getAssetsIn(account), liquidity: liquidity, shortfall: shortfall });
     }
 
     /**
@@ -448,19 +448,19 @@ contract VenusLens is ExponentialNoError {
     /**
      * @notice Query the XVSBalance extended info of an account
      * @param xvs XVS contract address
-     * @param comptroller Comptroller proxy contract address
+     * @param controller Controller proxy contract address
      * @param account Account address
      * @return Struct with XVS balance and voter details and XVS allocation
      */
     function getXVSBalanceMetadataExt(
         XVS xvs,
-        ComptrollerInterface comptroller,
+        ControllerInterface controller,
         address account
     ) external returns (XVSBalanceMetadataExt memory) {
         uint balance = xvs.balanceOf(account);
-        comptroller.claimVenus(account);
+        controller.claimVenus(account);
         uint newBalance = xvs.balanceOf(account);
-        uint accrued = comptroller.venusAccrued(account);
+        uint accrued = controller.venusAccrued(account);
         uint total = add_(accrued, newBalance, "sum xvs total");
         uint allocated = sub_(total, balance, "sub allocated");
 
@@ -499,14 +499,14 @@ contract VenusLens is ExponentialNoError {
      * @dev Queries the current supply to calculate rewards for an account
      * @param supplyState VenusMarketState struct
      * @param vToken Address of a vToken
-     * @param comptroller Address of the comptroller proxy
+     * @param controller Address of the controller proxy
      */
     function updateVenusSupplyIndex(
         VenusMarketState memory supplyState,
         address vToken,
-        ComptrollerInterface comptroller
+        ControllerInterface controller
     ) internal view {
-        uint supplySpeed = comptroller.venusSupplySpeeds(vToken);
+        uint supplySpeed = controller.venusSupplySpeeds(vToken);
         uint blockNumber = block.number;
         uint deltaBlocks = sub_(blockNumber, uint(supplyState.block));
         if (deltaBlocks > 0 && supplySpeed > 0) {
@@ -525,15 +525,15 @@ contract VenusLens is ExponentialNoError {
      * @dev Queries the current borrow to calculate rewards for an account
      * @param borrowState VenusMarketState struct
      * @param vToken Address of a vToken
-     * @param comptroller Address of the comptroller proxy
+     * @param controller Address of the controller proxy
      */
     function updateVenusBorrowIndex(
         VenusMarketState memory borrowState,
         address vToken,
         Exp memory marketBorrowIndex,
-        ComptrollerInterface comptroller
+        ControllerInterface controller
     ) internal view {
-        uint borrowSpeed = comptroller.venusBorrowSpeeds(vToken);
+        uint borrowSpeed = controller.venusBorrowSpeeds(vToken);
         uint blockNumber = block.number;
         uint deltaBlocks = sub_(blockNumber, uint(borrowState.block));
         if (deltaBlocks > 0 && borrowSpeed > 0) {
@@ -553,19 +553,19 @@ contract VenusLens is ExponentialNoError {
      * @param supplyState VenusMarketState struct
      * @param vToken Address of a vToken
      * @param supplier Address of the account supplying
-     * @param comptroller Address of the comptroller proxy
+     * @param controller Address of the controller proxy
      * @return Undistributed earned XVS from supplies
      */
     function distributeSupplierVenus(
         VenusMarketState memory supplyState,
         address vToken,
         address supplier,
-        ComptrollerInterface comptroller
+        ControllerInterface controller
     ) internal view returns (uint) {
         Double memory supplyIndex = Double({ mantissa: supplyState.index });
-        Double memory supplierIndex = Double({ mantissa: comptroller.venusSupplierIndex(vToken, supplier) });
+        Double memory supplierIndex = Double({ mantissa: controller.venusSupplierIndex(vToken, supplier) });
         if (supplierIndex.mantissa == 0 && supplyIndex.mantissa > 0) {
-            supplierIndex.mantissa = comptroller.venusInitialIndex();
+            supplierIndex.mantissa = controller.venusInitialIndex();
         }
 
         Double memory deltaIndex = sub_(supplyIndex, supplierIndex);
@@ -580,7 +580,7 @@ contract VenusLens is ExponentialNoError {
      * @param vToken Address of a vToken
      * @param borrower Address of the account borrowing
      * @param marketBorrowIndex vToken Borrow index
-     * @param comptroller Address of the comptroller proxy
+     * @param controller Address of the controller proxy
      * @return Undistributed earned XVS from borrows
      */
     function distributeBorrowerVenus(
@@ -588,10 +588,10 @@ contract VenusLens is ExponentialNoError {
         address vToken,
         address borrower,
         Exp memory marketBorrowIndex,
-        ComptrollerInterface comptroller
+        ControllerInterface controller
     ) internal view returns (uint) {
         Double memory borrowIndex = Double({ mantissa: borrowState.index });
-        Double memory borrowerIndex = Double({ mantissa: comptroller.venusBorrowerIndex(vToken, borrower) });
+        Double memory borrowerIndex = Double({ mantissa: controller.venusBorrowerIndex(vToken, borrower) });
         if (borrowerIndex.mantissa > 0) {
             Double memory deltaIndex = sub_(borrowIndex, borrowerIndex);
             uint borrowerAmount = div_(VToken(vToken).borrowBalanceStored(borrower), marketBorrowIndex);
@@ -604,28 +604,28 @@ contract VenusLens is ExponentialNoError {
     /**
      * @notice Calculate the total XVS tokens pending and accrued by a user account
      * @param holder Account to query pending XVS
-     * @param comptroller Address of the comptroller
+     * @param controller Address of the controller
      * @return Reward object contraining the totalRewards and pending rewards for each market
      */
     function pendingRewards(
         address holder,
-        ComptrollerInterface comptroller
+        ControllerInterface controller
     ) external view returns (RewardSummary memory) {
-        VToken[] memory vTokens = comptroller.getAllMarkets();
+        VToken[] memory vTokens = controller.getAllMarkets();
         ClaimVenusLocalVariables memory vars;
         RewardSummary memory rewardSummary;
-        rewardSummary.distributorAddress = address(comptroller);
-        rewardSummary.rewardTokenAddress = comptroller.getXVSAddress();
-        rewardSummary.totalRewards = comptroller.venusAccrued(holder);
+        rewardSummary.distributorAddress = address(controller);
+        rewardSummary.rewardTokenAddress = controller.getXVSAddress();
+        rewardSummary.totalRewards = controller.venusAccrued(holder);
         rewardSummary.pendingRewards = new PendingReward[](vTokens.length);
         for (uint i; i < vTokens.length; ++i) {
-            (vars.borrowIndex, vars.borrowBlock) = comptroller.venusBorrowState(address(vTokens[i]));
+            (vars.borrowIndex, vars.borrowBlock) = controller.venusBorrowState(address(vTokens[i]));
             VenusMarketState memory borrowState = VenusMarketState({
                 index: vars.borrowIndex,
                 block: vars.borrowBlock
             });
 
-            (vars.supplyIndex, vars.supplyBlock) = comptroller.venusSupplyState(address(vTokens[i]));
+            (vars.supplyIndex, vars.supplyBlock) = controller.venusSupplyState(address(vTokens[i]));
             VenusMarketState memory supplyState = VenusMarketState({
                 index: vars.supplyIndex,
                 block: vars.supplyBlock
@@ -636,17 +636,17 @@ contract VenusLens is ExponentialNoError {
             PendingReward memory marketReward;
             marketReward.vTokenAddress = address(vTokens[i]);
 
-            updateVenusBorrowIndex(borrowState, address(vTokens[i]), borrowIndex, comptroller);
+            updateVenusBorrowIndex(borrowState, address(vTokens[i]), borrowIndex, controller);
             uint256 borrowReward = distributeBorrowerVenus(
                 borrowState,
                 address(vTokens[i]),
                 holder,
                 borrowIndex,
-                comptroller
+                controller
             );
 
-            updateVenusSupplyIndex(supplyState, address(vTokens[i]), comptroller);
-            uint256 supplyReward = distributeSupplierVenus(supplyState, address(vTokens[i]), holder, comptroller);
+            updateVenusSupplyIndex(supplyState, address(vTokens[i]), controller);
+            uint256 supplyReward = distributeSupplierVenus(supplyState, address(vTokens[i]), holder, controller);
 
             marketReward.amount = add_(borrowReward, supplyReward);
             rewardSummary.pendingRewards[i] = marketReward;

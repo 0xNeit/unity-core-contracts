@@ -1,7 +1,7 @@
 pragma solidity ^0.5.16;
 
 import "../Tokens/VAI/VAIController.sol";
-import "./ComptrollerScenario.sol";
+import "./ControllerScenario.sol";
 
 contract VAIControllerScenario is VAIController {
     uint internal blockNumber;

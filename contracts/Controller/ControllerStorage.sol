@@ -3,7 +3,7 @@ pragma solidity ^0.5.16;
 import "../Tokens/VTokens/VToken.sol";
 import "../Oracle/PriceOracle.sol";
 import "../Tokens/VAI/VAIControllerInterface.sol";
-import "./ComptrollerLensInterface.sol";
+import "./ControllerLensInterface.sol";
 
 contract UnitrollerAdminStorage {
     /**
@@ -19,15 +19,15 @@ contract UnitrollerAdminStorage {
     /**
      * @notice Active brains of Unitroller
      */
-    address public comptrollerImplementation;
+    address public controllerImplementation;
 
     /**
      * @notice Pending brains of Unitroller
      */
-    address public pendingComptrollerImplementation;
+    address public pendingControllerImplementation;
 }
 
-contract ComptrollerV1Storage is UnitrollerAdminStorage {
+contract ControllerV1Storage is UnitrollerAdminStorage {
     /**
      * @notice Oracle which gives the price of any given asset
      */
@@ -147,7 +147,7 @@ contract ComptrollerV1Storage is UnitrollerAdminStorage {
     uint private venusVAIRate;
 }
 
-contract ComptrollerV2Storage is ComptrollerV1Storage {
+contract ControllerV2Storage is ControllerV1Storage {
     /// @notice The rate at which the flywheel distributes XVS to VAI Vault, per block
     uint public venusVAIVaultRate;
 
@@ -161,7 +161,7 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
     uint256 public minReleaseAmount;
 }
 
-contract ComptrollerV3Storage is ComptrollerV2Storage {
+contract ControllerV3Storage is ControllerV2Storage {
     /// @notice The borrowCapGuardian can set borrowCaps to any number for any market. Lowering the borrow cap could disable borrowing on the given market.
     address public borrowCapGuardian;
 
@@ -169,7 +169,7 @@ contract ComptrollerV3Storage is ComptrollerV2Storage {
     mapping(address => uint) public borrowCaps;
 }
 
-contract ComptrollerV4Storage is ComptrollerV3Storage {
+contract ControllerV4Storage is ControllerV3Storage {
     /// @notice Treasury Guardian address
     address public treasuryGuardian;
 
@@ -180,7 +180,7 @@ contract ComptrollerV4Storage is ComptrollerV3Storage {
     uint256 public treasuryPercent;
 }
 
-contract ComptrollerV5Storage is ComptrollerV4Storage {
+contract ControllerV5Storage is ControllerV4Storage {
     /// @notice The portion of XVS that each contributor receives per block (deprecated)
     mapping(address => uint) private venusContributorSpeeds;
 
@@ -188,20 +188,20 @@ contract ComptrollerV5Storage is ComptrollerV4Storage {
     mapping(address => uint) private lastContributorBlock;
 }
 
-contract ComptrollerV6Storage is ComptrollerV5Storage {
+contract ControllerV6Storage is ControllerV5Storage {
     address public liquidatorContract;
 }
 
-contract ComptrollerV7Storage is ComptrollerV6Storage {
-    ComptrollerLensInterface public comptrollerLens;
+contract ControllerV7Storage is ControllerV6Storage {
+    ControllerLensInterface public controllerLens;
 }
 
-contract ComptrollerV8Storage is ComptrollerV7Storage {
+contract ControllerV8Storage is ControllerV7Storage {
     /// @notice Supply caps enforced by mintAllowed for each vToken address. Defaults to zero which corresponds to minting notAllowed
     mapping(address => uint256) public supplyCaps;
 }
 
-contract ComptrollerV9Storage is ComptrollerV8Storage {
+contract ControllerV9Storage is ControllerV8Storage {
     /// @notice AccessControlManager address
     address internal accessControl;
 
@@ -221,7 +221,7 @@ contract ComptrollerV9Storage is ComptrollerV8Storage {
     mapping(address => mapping(uint => bool)) internal _actionPaused;
 }
 
-contract ComptrollerV10Storage is ComptrollerV9Storage {
+contract ControllerV10Storage is ControllerV9Storage {
     /// @notice The rate at which venus is distributed to the corresponding borrow market (per block)
     mapping(address => uint) public venusBorrowSpeeds;
 
@@ -229,7 +229,7 @@ contract ComptrollerV10Storage is ComptrollerV9Storage {
     mapping(address => uint) public venusSupplySpeeds;
 }
 
-contract ComptrollerV11Storage is ComptrollerV10Storage {
+contract ControllerV11Storage is ControllerV10Storage {
     /// @notice Whether the delegate is allowed to borrow on behalf of the borrower
     //mapping(address borrower => mapping (address delegate => bool approved)) public approvedDelegates;
     mapping(address => mapping(address => bool)) public approvedDelegates;

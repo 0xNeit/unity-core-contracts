@@ -5,15 +5,15 @@ import "../Tokens/VTokens/VToken.sol";
 import "../Utils/ErrorReporter.sol";
 import "../Tokens/XVS/XVS.sol";
 import "../Tokens/VAI/VAI.sol";
-import "./ComptrollerInterface.sol";
-import "./ComptrollerStorage.sol";
+import "./ControllerInterface.sol";
+import "./ControllerStorage.sol";
 import "./Unitroller.sol";
 
 /**
- * @title Venus's Comptroller Contract
+ * @title Venus's Controller Contract
  * @author Venus
  */
-contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, ComptrollerErrorReporter, ExponentialNoError {
+contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
     event MarketListed(VToken vToken);
 
@@ -98,6 +98,9 @@ contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, Comptrol
 
     /// @notice Emitted when treasury percent is changed
     event NewTreasuryPercent(uint oldTreasuryPercent, uint newTreasuryPercent);
+
+    /// @notice Emitted when Venus is granted by admin
+    event VenusGranted(address recipient, uint amount);
 
     /// @notice The initial Venus index for a market
     uint224 public constant venusInitialIndex = 1e36;
@@ -617,8 +620,8 @@ contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, Comptrol
             return uint(Error.MARKET_NOT_LISTED);
         }
 
-        if (VToken(vTokenCollateral).comptroller() != VToken(vTokenBorrowed).comptroller()) {
-            return uint(Error.COMPTROLLER_MISMATCH);
+        if (VToken(vTokenCollateral).controller() != VToken(vTokenBorrowed).controller()) {
+            return uint(Error.CONTROLLER_MISMATCH);
         }
 
         // Keep the flywheel moving
@@ -810,7 +813,7 @@ contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, Comptrol
             }
             vars.oraclePrice = Exp({ mantissa: vars.oraclePriceMantissa });
 
-            // Pre-compute a conversion factor from tokens -> bnb (normalized price value)
+            // Pre-compute a conversion factor from tokens -> core (normalized price value)
             vars.tokensToDenom = mul_(mul_(vars.collateralFactor, vars.exchangeRate), vars.oraclePrice);
 
             // sumCollateral += tokensToDenom * vTokenBalance
@@ -936,7 +939,7 @@ contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, Comptrol
     /*** Admin Functions ***/
 
     /**
-     * @notice Sets a new price oracle for the comptroller
+     * @notice Sets a new price oracle for the controller
      * @dev Admin function to set a new price oracle
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
@@ -946,10 +949,10 @@ contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, Comptrol
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
         }
 
-        // Track the old oracle for the comptroller
+        // Track the old oracle for the controller
         PriceOracle oldOracle = oracle;
 
-        // Set comptroller's oracle to newOracle
+        // Set controller's oracle to newOracle
         oracle = newOracle;
 
         // Emit NewPriceOracle(oldOracle, newOracle)
@@ -1209,7 +1212,7 @@ contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, Comptrol
      * @notice Checks caller is admin, or this contract is becoming the new implementation
      */
     function adminOrInitializing() internal view returns (bool) {
-        return msg.sender == admin || msg.sender == comptrollerImplementation;
+        return msg.sender == admin || msg.sender == controllerImplementation;
     }
 
     /*** Venus Distribution ***/
@@ -1445,6 +1448,19 @@ contract ComptrollerG4 is ComptrollerV4Storage, ComptrollerInterfaceG2, Comptrol
     }
 
     /*** Venus Distribution Admin ***/
+
+    /**
+     * @notice Transfer XVS to the recipient
+     * @dev Note: If there is not enough XVS, we do not perform the transfer all.
+     * @param recipient The address of the recipient to transfer XVS to
+     * @param amount The amount of XVS to (possibly) transfer
+     */
+    function _grantXVS(address recipient, uint amount) public {
+        require(adminOrInitializing(), "only admin can grant xvs");
+        uint amountLeft = grantXVSInternal(recipient, amount);
+        require(amountLeft == 0, "insufficient xvs for grant");
+        emit VenusGranted(recipient, amount);
+    }
 
     /**
      * @notice Set the amount of XVS distributed per block to VAI Vault

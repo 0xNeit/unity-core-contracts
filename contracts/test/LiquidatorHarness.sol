@@ -7,10 +7,10 @@ import "../Liquidator/Liquidator.sol";
 contract LiquidatorHarness is Liquidator {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(
-        address comptroller_,
-        address payable vBnb_,
+        address controller_,
+        address payable vCore_,
         address treasury_
-    ) Liquidator(comptroller_, vBnb_, treasury_) {}
+    ) Liquidator(controller_, vCore_, treasury_) {}
 
     function initialize(uint256 liquidationIncentiveMantissa_) external override initializer {
         __Liquidator_init(liquidationIncentiveMantissa_);

@@ -1,13 +1,13 @@
 pragma solidity ^0.5.16;
 
-import "../Comptroller/ComptrollerG2.sol";
+import "../Controller/ControllerG2.sol";
 
-contract ComptrollerScenarioG2 is ComptrollerG2 {
+contract ControllerScenarioG2 is ControllerG2 {
     uint public blockNumber;
     /// @notice Supply caps enforced by mintAllowed for each vToken address. Defaults to zero which corresponds to minting notAllowed
     mapping(address => uint) public supplyCaps;
 
-    constructor() public ComptrollerG2() {}
+    constructor() public ControllerG2() {}
 
     function fastForward(uint blocks) public returns (uint) {
         blockNumber += blocks;

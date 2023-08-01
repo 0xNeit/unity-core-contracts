@@ -52,15 +52,15 @@ library TransferHelper {
     }
 
     /**
-     * @dev Transfer `value` amount of `BNB` from the calling contract to `to`. If `token` returns no value,
+     * @dev Transfer `value` amount of `CORE` from the calling contract to `to`. If `token` returns no value,
      * non-reverting calls are assumed to be successful.
      * @param to Address of the receiver
      * @param value Amount need to transfer
      */
-    function safeTransferBNB(address to, uint256 value) internal {
+    function safeTransferCORE(address to, uint256 value) internal {
         (bool success, ) = to.call{ value: value }(new bytes(0));
         if (!success) {
-            revert SafeTransferBNBFailed();
+            revert SafeTransferCOREFailed();
         }
     }
 }

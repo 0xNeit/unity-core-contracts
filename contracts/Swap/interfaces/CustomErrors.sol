@@ -10,7 +10,7 @@ error SupplyError(address supplier, address vToken, uint256 errorCode);
 ///@notice Error indicating that repaying to given market failed.
 error RepayError(address repayer, address vToken, uint256 errorCode);
 
-///@notice Error indicating wBNB address passed is not the expected one.
+///@notice Error indicating wCORE address passed is not the expected one.
 error WrongAddress(address expectedAdddress, address passedAddress);
 
 ///@notice Error thrown when deadline for swap has expired
@@ -64,8 +64,8 @@ error SafeTransferFailed();
 ///@notice Error thrown when transferFrom failed
 error SafeTransferFromFailed();
 
-///@notice Error thrown when safeTransferBNB failed
-error SafeTransferBNBFailed();
+///@notice Error thrown when safeTransferCORE failed
+error SafeTransferCOREFailed();
 
 ///@notice Error thrown when reentrant check fails
 error ReentrantCheck();

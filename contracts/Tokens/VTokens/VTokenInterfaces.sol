@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-import "../../Comptroller/ComptrollerInterface.sol";
+import "../../Controller/ControllerInterface.sol";
 import "../../InterestRateModels/InterestRateModel.sol";
 
 contract VTokenStorage {
@@ -58,7 +58,7 @@ contract VTokenStorage {
     /**
      * @notice Contract which oversees inter-vToken operations
      */
-    ComptrollerInterface public comptroller;
+    ControllerInterface public controller;
 
     /**
      * @notice Model which tells what the current interest rate should be
@@ -183,9 +183,9 @@ contract VTokenInterface is VTokenStorage {
     event NewAdmin(address oldAdmin, address newAdmin);
 
     /**
-     * @notice Event emitted when comptroller is changed
+     * @notice Event emitted when controller is changed
      */
-    event NewComptroller(ComptrollerInterface oldComptroller, ComptrollerInterface newComptroller);
+    event NewController(ControllerInterface oldController, ControllerInterface newController);
 
     /**
      * @notice Event emitted when interestRateModel is changed
@@ -267,7 +267,7 @@ contract VTokenInterface is VTokenStorage {
     function accrueInterest() public returns (uint);
 
     /*** Admin Function ***/
-    function _setComptroller(ComptrollerInterface newComptroller) public returns (uint);
+    function _setController(ControllerInterface newController) public returns (uint);
 
     /*** Admin Function ***/
     function _setInterestRateModel(InterestRateModel newInterestRateModel) public returns (uint);

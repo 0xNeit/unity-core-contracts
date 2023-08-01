@@ -1,23 +1,23 @@
 pragma solidity ^0.5.16;
 
-import "../Tokens/VTokens/VBNB.sol";
-import "./ComptrollerScenario.sol";
+import "../Tokens/VTokens/VCORE.sol";
+import "./ControllerScenario.sol";
 
-contract VBNBHarness is VBNB {
+contract VCOREHarness is VCORE {
     uint internal harnessExchangeRate;
     uint public blockNumber = 100000;
 
     mapping(address => bool) public failTransferToAddresses;
 
     constructor(
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint initialExchangeRateMantissa,
         string memory name_,
         string memory symbol_,
         uint8 decimals_,
         address payable admin_
-    ) public VBNB(comptroller_, interestRateModel_, initialExchangeRateMantissa, name_, symbol_, decimals_, admin_) {}
+    ) public VCORE(controller_, interestRateModel_, initialExchangeRateMantissa, name_, symbol_, decimals_, admin_) {}
 
     function doTransferOut(address payable to, uint amount) internal {
         require(failTransferToAddresses[to] == false, "TOKEN_TRANSFER_OUT_FAILED");
@@ -163,7 +163,7 @@ contract VBNBHarness is VBNB {
     }
 }
 
-contract VBNBScenario is VBNB {
+contract VCOREScenario is VCORE {
     uint internal reserveFactor;
 
     constructor(
@@ -171,10 +171,10 @@ contract VBNBScenario is VBNB {
         string memory symbol_,
         uint8 decimals_,
         address payable admin_,
-        ComptrollerInterface comptroller_,
+        ControllerInterface controller_,
         InterestRateModel interestRateModel_,
         uint initialExchangeRateMantissa
-    ) public VBNB(comptroller_, interestRateModel_, initialExchangeRateMantissa, name_, symbol_, decimals_, admin_) {}
+    ) public VCORE(controller_, interestRateModel_, initialExchangeRateMantissa, name_, symbol_, decimals_, admin_) {}
 
     function setTotalBorrows(uint totalBorrows_) public {
         totalBorrows = totalBorrows_;
@@ -189,7 +189,7 @@ contract VBNBScenario is VBNB {
     }
 
     function getBlockNumber() internal view returns (uint) {
-        ComptrollerScenario comptrollerScenario = ComptrollerScenario(address(comptroller));
-        return comptrollerScenario.blockNumber();
+        ControllerScenario controllerScenario = ControllerScenario(address(controller));
+        return controllerScenario.blockNumber();
     }
 }

@@ -14,7 +14,7 @@ interface IVBep20 is IVToken {
     ) external returns (uint256);
 }
 
-interface IVBNB is IVToken {
+interface IVCORE is IVToken {
     function liquidateBorrow(address borrower, IVToken vTokenCollateral) external payable;
 }
 
@@ -28,7 +28,7 @@ interface IVAIController {
     function getVAIAddress() external view returns (address);
 }
 
-interface IComptroller {
+interface IController {
     function liquidationIncentiveMantissa() external view returns (uint256);
 
     function vaiController() external view returns (IVAIController);

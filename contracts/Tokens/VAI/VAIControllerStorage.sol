@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-import { Comptroller } from "../../Comptroller/Comptroller.sol";
+import { Controller } from "../../Controller/Controller.sol";
 
 contract VAIUnitrollerAdminStorage {
     /**
@@ -25,7 +25,7 @@ contract VAIUnitrollerAdminStorage {
 }
 
 contract VAIControllerStorageG1 is VAIUnitrollerAdminStorage {
-    Comptroller public comptroller;
+    Controller public controller;
 
     struct VenusVAIState {
         /// @notice The last updated venusVAIMintIndex

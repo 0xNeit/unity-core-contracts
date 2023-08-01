@@ -3,9 +3,9 @@ pragma solidity ^0.5.16;
 import "../Tokens/VTokens/VToken.sol";
 import "../Oracle/PriceOracle.sol";
 
-contract ComptrollerInterfaceG1 {
-    /// @notice Indicator that this is a Comptroller contract (for inspection)
-    bool public constant isComptroller = true;
+contract ControllerInterfaceG1 {
+    /// @notice Indicator that this is a Controller contract (for inspection)
+    bool public constant isController = true;
 
     /*** Assets You Are In ***/
 
@@ -90,25 +90,25 @@ contract ComptrollerInterfaceG1 {
     function setMintedVAIOf(address owner, uint amount) external returns (uint);
 }
 
-contract ComptrollerInterfaceG2 is ComptrollerInterfaceG1 {
+contract ControllerInterfaceG2 is ControllerInterfaceG1 {
     function liquidateVAICalculateSeizeTokens(
         address vTokenCollateral,
         uint repayAmount
     ) external view returns (uint, uint);
 }
 
-contract ComptrollerInterfaceG3 is ComptrollerInterfaceG2 {
+contract ControllerInterfaceG3 is ControllerInterfaceG2 {
     function liquidateVAICalculateSeizeTokens(
         address vTokenCollateral,
         uint repayAmount
     ) external view returns (uint, uint);
 }
 
-contract ComptrollerInterfaceG4 is ComptrollerInterfaceG3 {
+contract ControllerInterfaceG4 is ControllerInterfaceG3 {
     function getXVSAddress() public view returns (address);
 }
 
-contract ComptrollerInterface is ComptrollerInterfaceG4 {
+contract ControllerInterface is ControllerInterfaceG4 {
     function markets(address) external view returns (bool, uint);
 
     function oracle() external view returns (PriceOracle);
@@ -144,7 +144,7 @@ interface IVAIVault {
     function updatePendingRewards() external;
 }
 
-interface IComptroller {
+interface IController {
     function liquidationIncentiveMantissa() external view returns (uint);
 
     /*** Treasury Data ***/

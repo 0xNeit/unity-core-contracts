@@ -6,23 +6,23 @@ import "../Utils/ErrorReporter.sol";
 import "../Tokens/XVS/XVS.sol";
 import "../Tokens/VAI/VAI.sol";
 import "../Governance/IAccessControlManager.sol";
-import "./ComptrollerLensInterface.sol";
-import "./UpdatedComptrollerInterface.sol";
-import "./ComptrollerStorage.sol";
+import "./ControllerLensInterface.sol";
+import "./UpdatedControllerInterface.sol";
+import "./ControllerStorage.sol";
 import "./Unitroller.sol";
 
 /**
- * @title Venus's Comptroller Contract
- * @dev Name of this comptorller is updated to UpdatedComptroller as tests were failing
+ * @title Venus's Controller Contract
+ * @dev Name of this comptorller is updated to UpdatedController as tests were failing
  * due to the two contracts name by Comptorller. At the time of deployment of this
  * contract to mainnet it should be nammed as Comptorller
  * @author Venus
  */
 //
-contract UpdatedComptroller is
-    ComptrollerV10Storage,
-    UpdatedComptrollerInterfaceG2,
-    ComptrollerErrorReporter,
+contract UpdatedController is
+    ControllerV10Storage,
+    UpdatedControllerInterfaceG2,
+    ControllerErrorReporter,
     ExponentialNoError
 {
     /// @notice Emitted when an admin supports a market
@@ -110,8 +110,8 @@ contract UpdatedComptroller is
     /// @notice Emitted when Venus is granted by admin
     event VenusGranted(address recipient, uint amount);
 
-    /// @notice Emitted whe ComptrollerLens address is changed
-    event NewComptrollerLens(address oldComptrollerLens, address newComptrollerLens);
+    /// @notice Emitted whe ControllerLens address is changed
+    event NewControllerLens(address oldControllerLens, address newControllerLens);
 
     /// @notice Emitted when supply cap for a vToken is changed
     event NewSupplyCap(VToken indexed vToken, uint newSupplyCap);
@@ -532,8 +532,8 @@ contract UpdatedComptroller is
             ensureListed(markets[vTokenBorrowed]);
         }
 
-        if (VToken(vTokenCollateral).comptroller() != VToken(vTokenBorrowed).comptroller()) {
-            return uint(Error.COMPTROLLER_MISMATCH);
+        if (VToken(vTokenCollateral).controller() != VToken(vTokenBorrowed).controller()) {
+            return uint(Error.CONTROLLER_MISMATCH);
         }
 
         // Keep the flywheel moving
@@ -627,7 +627,7 @@ contract UpdatedComptroller is
         uint redeemTokens,
         uint borrowAmount
     ) internal view returns (Error, uint, uint) {
-        (uint err, uint liquidity, uint shortfall) = comptrollerLens.getHypotheticalAccountLiquidity(
+        (uint err, uint liquidity, uint shortfall) = controllerLens.getHypotheticalAccountLiquidity(
             address(this),
             account,
             vTokenModify,
@@ -650,7 +650,7 @@ contract UpdatedComptroller is
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint) {
-        (uint err, uint seizeTokens) = comptrollerLens.liquidateCalculateSeizeTokens(
+        (uint err, uint seizeTokens) = controllerLens.liquidateCalculateSeizeTokens(
             address(this),
             vTokenBorrowed,
             vTokenCollateral,
@@ -670,7 +670,7 @@ contract UpdatedComptroller is
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint) {
-        (uint err, uint seizeTokens) = comptrollerLens.liquidateVAICalculateSeizeTokens(
+        (uint err, uint seizeTokens) = controllerLens.liquidateVAICalculateSeizeTokens(
             address(this),
             vTokenCollateral,
             actualRepayAmount
@@ -681,7 +681,7 @@ contract UpdatedComptroller is
     /*** Admin Functions ***/
 
     /**
-     * @notice Sets a new price oracle for the comptroller
+     * @notice Sets a new price oracle for the controller
      * @dev Admin function to set a new price oracle
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
@@ -690,10 +690,10 @@ contract UpdatedComptroller is
         ensureAdmin();
         ensureNonzeroAddress(address(newOracle));
 
-        // Track the old oracle for the comptroller
+        // Track the old oracle for the controller
         PriceOracle oldOracle = oracle;
 
-        // Set comptroller's oracle to newOracle
+        // Set controller's oracle to newOracle
         oracle = newOracle;
 
         // Emit NewPriceOracle(oldOracle, newOracle)
@@ -1026,12 +1026,12 @@ contract UpdatedComptroller is
         require(unitroller._acceptImplementation() == 0, "not authorized");
 
         // TODO: Remove this post upgrade
-        // Should have to change UpdatedComptroller to Comptroller
-        UpdatedComptroller(address(unitroller))._upgradeSplitVenusRewards();
+        // Should have to change UpdatedController to Controller
+        UpdatedController(address(unitroller))._upgradeSplitVenusRewards();
     }
 
     function _upgradeSplitVenusRewards() external {
-        require(msg.sender == comptrollerImplementation, "only brains can become itself");
+        require(msg.sender == controllerImplementation, "only brains can become itself");
 
         uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
 
@@ -1092,14 +1092,14 @@ contract UpdatedComptroller is
     }
 
     /**
-     * @dev Set ComptrollerLens contract address
+     * @dev Set ControllerLens contract address
      */
-    function _setComptrollerLens(ComptrollerLensInterface comptrollerLens_) external returns (uint) {
+    function _setControllerLens(ControllerLensInterface controllerLens_) external returns (uint) {
         ensureAdmin();
-        ensureNonzeroAddress(address(comptrollerLens_));
-        address oldComptrollerLens = address(comptrollerLens);
-        comptrollerLens = comptrollerLens_;
-        emit NewComptrollerLens(oldComptrollerLens, address(comptrollerLens));
+        ensureNonzeroAddress(address(controllerLens_));
+        address oldControllerLens = address(controllerLens);
+        controllerLens = controllerLens_;
+        emit NewControllerLens(oldControllerLens, address(controllerLens));
 
         return uint(Error.NO_ERROR);
     }
@@ -1358,7 +1358,7 @@ contract UpdatedComptroller is
      * @param amount The amount of XVS to (possibly) transfer
      */
     function _grantXVS(address recipient, uint amount) external {
-        ensureAdminOr(comptrollerImplementation);
+        ensureAdminOr(controllerImplementation);
         uint amountLeft = grantXVSInternal(recipient, amount, 0, false);
         require(amountLeft == 0, "insufficient xvs for grant");
         emit VenusGranted(recipient, amount);
@@ -1403,12 +1403,12 @@ contract UpdatedComptroller is
         uint[] calldata supplySpeeds,
         uint[] calldata borrowSpeeds
     ) external {
-        ensureAdminOr(comptrollerImplementation);
+        ensureAdminOr(controllerImplementation);
 
         uint numTokens = vTokens.length;
         require(
             numTokens == supplySpeeds.length && numTokens == borrowSpeeds.length,
-            "Comptroller::_setVenusSpeeds invalid input"
+            "Controller::_setVenusSpeeds invalid input"
         );
 
         for (uint i; i < numTokens; ++i) {

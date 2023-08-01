@@ -6,7 +6,7 @@ import "./VAIControllerStorage.sol";
 /**
  * @title VAI Unitroller
  * @author Venus
- * @notice This is the proxy contract for the VAIComptroller
+ * @notice This is the proxy contract for the VAIController
  */
 contract VAIUnitroller is VAIUnitrollerAdminStorage, VAIControllerErrorReporter {
     /**
@@ -15,7 +15,7 @@ contract VAIUnitroller is VAIUnitrollerAdminStorage, VAIControllerErrorReporter 
     event NewPendingImplementation(address oldPendingImplementation, address newPendingImplementation);
 
     /**
-     * @notice Emitted when pendingVAIControllerImplementation is accepted, which means comptroller implementation is updated
+     * @notice Emitted when pendingVAIControllerImplementation is accepted, which means controller implementation is updated
      */
     event NewImplementation(address oldImplementation, address newImplementation);
 
@@ -50,7 +50,7 @@ contract VAIUnitroller is VAIUnitrollerAdminStorage, VAIControllerErrorReporter 
     }
 
     /**
-     * @notice Accepts new implementation of comptroller. msg.sender must be pendingImplementation
+     * @notice Accepts new implementation of controller. msg.sender must be pendingImplementation
      * @dev Admin function for new implementation to accept it's role as implementation
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */

@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import "../Tokens/VTokens/VToken.sol";
 import "../Utils/SafeMath.sol";
-import "../Comptroller/Comptroller.sol";
+import "../Controller/Controller.sol";
 import "../Tokens/EIP20Interface.sol";
 import "../Tokens/VTokens/VBep20.sol";
 
@@ -52,19 +52,19 @@ contract SnapshotLens is ExponentialNoError {
 
     function getAccountSnapshot(
         address payable account,
-        address comptrollerAddress
+        address controllerAddress
     ) public returns (AccountSnapshot[] memory) {
         // For each asset the account is in
-        VToken[] memory assets = Comptroller(comptrollerAddress).getAllMarkets();
+        VToken[] memory assets = Controller(controllerAddress).getAllMarkets();
         AccountSnapshot[] memory accountSnapshots = new AccountSnapshot[](assets.length);
         for (uint256 i = 0; i < assets.length; ++i) {
-            accountSnapshots[i] = getAccountSnapshot(account, comptrollerAddress, assets[i]);
+            accountSnapshots[i] = getAccountSnapshot(account, controllerAddress, assets[i]);
         }
         return accountSnapshots;
     }
 
-    function isACollateral(address account, address asset, address comptrollerAddress) public view returns (bool) {
-        VToken[] memory assetsAsCollateral = Comptroller(comptrollerAddress).getAssetsIn(account);
+    function isACollateral(address account, address asset, address controllerAddress) public view returns (bool) {
+        VToken[] memory assetsAsCollateral = Controller(controllerAddress).getAssetsIn(account);
         for (uint256 j = 0; j < assetsAsCollateral.length; ++j) {
             if (address(assetsAsCollateral[j]) == asset) {
                 return true;
@@ -76,7 +76,7 @@ contract SnapshotLens is ExponentialNoError {
 
     function getAccountSnapshot(
         address payable account,
-        address comptrollerAddress,
+        address controllerAddress,
         VToken vToken
     ) public returns (AccountSnapshot memory) {
         AccountSnapshotLocalVars memory vars; // Holds all our calculation results
@@ -87,16 +87,16 @@ contract SnapshotLens is ExponentialNoError {
         require(oErr == 0, "Snapshot Error");
         vars.exchangeRate = Exp({ mantissa: vars.exchangeRateMantissa });
 
-        Comptroller comptrollerInstance = Comptroller(comptrollerAddress);
+        Controller controllerInstance = Controller(controllerAddress);
 
-        (, uint collateralFactorMantissa, ) = comptrollerInstance.markets(address(vToken));
+        (, uint collateralFactorMantissa, ) = controllerInstance.markets(address(vToken));
         vars.collateralFactor = Exp({ mantissa: collateralFactorMantissa });
 
         // Get the normalized price of the asset
-        vars.oraclePriceMantissa = comptrollerInstance.oracle().getUnderlyingPrice(vToken);
+        vars.oraclePriceMantissa = controllerInstance.oracle().getUnderlyingPrice(vToken);
         vars.oraclePrice = Exp({ mantissa: vars.oraclePriceMantissa });
 
-        // Pre-compute a conversion factor from tokens -> bnb (normalized price value)
+        // Pre-compute a conversion factor from tokens -> core (normalized price value)
         vars.tokensToDenom = mul_(mul_(vars.collateralFactor, vars.exchangeRate), vars.oraclePrice);
 
         //Collateral = tokensToDenom * vTokenBalance
@@ -110,7 +110,7 @@ contract SnapshotLens is ExponentialNoError {
         address underlyingAssetAddress;
         uint underlyingDecimals;
 
-        if (compareStrings(vToken.symbol(), "vBNB")) {
+        if (compareStrings(vToken.symbol(), "vCORE")) {
             underlyingAssetAddress = address(0);
             underlyingDecimals = 18;
         } else {
@@ -119,7 +119,7 @@ contract SnapshotLens is ExponentialNoError {
             underlyingDecimals = EIP20Interface(vBep20.underlying()).decimals();
         }
 
-        vars.isACollateral = isACollateral(account, address(vToken), comptrollerAddress);
+        vars.isACollateral = isACollateral(account, address(vToken), controllerAddress);
 
         return
             AccountSnapshot({

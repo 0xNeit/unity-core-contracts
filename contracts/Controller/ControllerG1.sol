@@ -6,15 +6,15 @@ import "../Utils/ErrorReporter.sol";
 import "../Utils/Exponential.sol";
 import "../Tokens/XVS/XVS.sol";
 import "../Tokens/VAI/VAI.sol";
-import "./ComptrollerInterface.sol";
-import "./ComptrollerStorage.sol";
+import "./ControllerInterface.sol";
+import "./ControllerStorage.sol";
 import "./Unitroller.sol";
 
 /**
- * @title Venus's Comptroller Contract
+ * @title Venus's Controller Contract
  * @author Venus
  */
-contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterfaceG1, ComptrollerErrorReporter, Exponential {
+contract ControllerG1 is ControllerV1Storage, ControllerInterfaceG1, ControllerErrorReporter, Exponential {
     /// @notice Emitted when an admin supports a market
     event MarketListed(VToken vToken);
 
@@ -599,8 +599,8 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterfaceG1, Comptrol
             return uint(Error.MARKET_NOT_LISTED);
         }
 
-        if (VToken(vTokenCollateral).comptroller() != VToken(vTokenBorrowed).comptroller()) {
-            return uint(Error.COMPTROLLER_MISMATCH);
+        if (VToken(vTokenCollateral).controller() != VToken(vTokenBorrowed).controller()) {
+            return uint(Error.CONTROLLER_MISMATCH);
         }
 
         // Keep the flywheel moving
@@ -794,7 +794,7 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterfaceG1, Comptrol
             }
             vars.oraclePrice = Exp({ mantissa: vars.oraclePriceMantissa });
 
-            // Pre-compute a conversion factor from tokens -> bnb (normalized price value)
+            // Pre-compute a conversion factor from tokens -> core (normalized price value)
             (mErr, vars.tokensToDenom) = mulExp3(vars.collateralFactor, vars.exchangeRate, vars.oraclePrice);
             if (mErr != MathError.NO_ERROR) {
                 return (Error.MATH_ERROR, 0, 0);
@@ -920,7 +920,7 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterfaceG1, Comptrol
     /*** Admin Functions ***/
 
     /**
-     * @notice Sets a new price oracle for the comptroller
+     * @notice Sets a new price oracle for the controller
      * @dev Admin function to set a new price oracle
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
@@ -930,10 +930,10 @@ contract ComptrollerG1 is ComptrollerV1Storage, ComptrollerInterfaceG1, Comptrol
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
         }
 
-        // Track the old oracle for the comptroller
+        // Track the old oracle for the controller
         PriceOracle oldOracle = oracle;
 
-        // Set comptroller's oracle to newOracle
+        // Set controller's oracle to newOracle
         oracle = newOracle;
 
         // Emit NewPriceOracle(oldOracle, newOracle)

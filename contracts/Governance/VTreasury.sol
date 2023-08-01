@@ -16,11 +16,11 @@ contract VTreasury is Ownable {
     // WithdrawTreasuryBEP20 Event
     event WithdrawTreasuryBEP20(address tokenAddress, uint256 withdrawAmount, address withdrawAddress);
 
-    // WithdrawTreasuryBNB Event
-    event WithdrawTreasuryBNB(uint256 withdrawAmount, address withdrawAddress);
+    // WithdrawTreasuryCORE Event
+    event WithdrawTreasuryCORE(uint256 withdrawAmount, address withdrawAddress);
 
     /**
-     * @notice To receive BNB
+     * @notice To receive CORE
      */
     function() external payable {}
 
@@ -52,23 +52,23 @@ contract VTreasury is Ownable {
     }
 
     /**
-     * @notice Withdraw Treasury BNB, Only owner call it
+     * @notice Withdraw Treasury CORE, Only owner call it
      * @param withdrawAmount The withdraw amount to owner
      * @param withdrawAddress The withdraw address
      */
-    function withdrawTreasuryBNB(uint256 withdrawAmount, address payable withdrawAddress) external payable onlyOwner {
+    function withdrawTreasuryCORE(uint256 withdrawAmount, address payable withdrawAddress) external payable onlyOwner {
         uint256 actualWithdrawAmount = withdrawAmount;
-        // Get Treasury BNB Balance
-        uint256 bnbBalance = address(this).balance;
+        // Get Treasury CORE Balance
+        uint256 coreBalance = address(this).balance;
 
         // Check Withdraw Amount
-        if (withdrawAmount > bnbBalance) {
+        if (withdrawAmount > coreBalance) {
             // Update actualWithdrawAmount
-            actualWithdrawAmount = bnbBalance;
+            actualWithdrawAmount = coreBalance;
         }
-        // Transfer BNB to withdrawAddress
+        // Transfer CORE to withdrawAddress
         withdrawAddress.transfer(actualWithdrawAmount);
 
-        emit WithdrawTreasuryBNB(actualWithdrawAmount, withdrawAddress);
+        emit WithdrawTreasuryCORE(actualWithdrawAmount, withdrawAddress);
     }
 }

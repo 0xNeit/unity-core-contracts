@@ -104,7 +104,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
      * @dev NOTE: Proposals with duplicate set of actions can not be queued for execution. If the proposals consists
      *  of duplicate actions, it's recommended to split those actions into separate proposals
      * @param targets Target addresses for proposal calls
-     * @param values BNB values for proposal calls
+     * @param values CORE values for proposal calls
      * @param signatures Function signatures for proposal calls
      * @param calldatas Calldatas for proposal calls
      * @param description String description of the proposal

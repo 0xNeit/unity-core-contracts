@@ -1,26 +1,26 @@
 pragma solidity ^0.5.16;
 
-import "../Comptroller/Comptroller.sol";
+import "../Controller/Controller.sol";
 import "../Oracle/PriceOracle.sol";
 
-contract ComptrollerKovan is Comptroller {
+contract ControllerKovan is Controller {
     function getXVSAddress() public view returns (address) {
         return 0x61460874a7196d6a22D1eE4922473664b3E95270;
     }
 }
 
-contract ComptrollerRopsten is Comptroller {
+contract ControllerRopsten is Controller {
     function getXVSAddress() public view returns (address) {
         return 0x1Fe16De955718CFAb7A44605458AB023838C2793;
     }
 }
 
-contract ComptrollerHarness is Comptroller {
+contract ControllerHarness is Controller {
     address internal xvsAddress;
     address internal vXVSAddress;
     uint public blockNumber;
 
-    constructor() public Comptroller() {}
+    constructor() public Controller() {}
 
     function setVenusSupplyState(address vToken, uint224 index, uint32 blockNumber_) public {
         venusSupplyState[vToken].index = index;
@@ -189,14 +189,14 @@ contract ComptrollerHarness is Comptroller {
     }
 }
 
-contract ComptrollerBorked {
+contract ControllerBorked {
     function _become(Unitroller unitroller) public {
         require(msg.sender == unitroller.admin(), "only unitroller admin can change brains");
         unitroller._acceptImplementation();
     }
 }
 
-contract BoolComptroller is ComptrollerInterface {
+contract BoolController is ControllerInterface {
     bool internal allowMint = true;
     bool internal allowRedeem = true;
     bool internal allowBorrow = true;
@@ -541,7 +541,7 @@ contract BoolComptroller is ComptrollerInterface {
 
     function _setMarketSupplyCaps(VToken[] calldata vTokens, uint[] calldata newSupplyCaps) external {}
 
-    /*** Functions from ComptrollerInterface not implemented by BoolComptroller ***/
+    /*** Functions from ControllerInterface not implemented by BoolController ***/
 
     function markets(address) external view returns (bool, uint) {
         revert();
@@ -596,7 +596,7 @@ contract BoolComptroller is ComptrollerInterface {
     }
 }
 
-contract EchoTypesComptroller is UnitrollerAdminStorage {
+contract EchoTypesController is UnitrollerAdminStorage {
     function stringy(string memory s) public pure returns (string memory) {
         return s;
     }
