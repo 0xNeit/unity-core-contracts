@@ -3,8 +3,8 @@ pragma solidity ^0.5.16;
 import "./VirtualTokens/VCORE.sol";
 
 /**
- * @title Venus's Maximillion Contract
- * @author Venus
+ * @title UnityCore's Maximillion Contract
+ * @author UnityCore
  */
 contract Maximillion {
     /**

@@ -9,9 +9,9 @@ import "../../InterestRateModels/InterestRateModel.sol";
 import "./VTokenInterfaces.sol";
 
 /**
- * @title Venus's vToken Contract
+ * @title UnityCore's vToken Contract
  * @notice Abstract base for vTokens
- * @author Venus
+ * @author UnityCore
  */
 contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
     struct MintLocalVars {
@@ -651,7 +651,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          *  We call `doTransferIn` for the minter and the mintAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between ERC-20 and CORE underlying.
          *  `doTransferIn` reverts if anything goes wrong, since we can't be sure if
          *  side-effects occurred. The function returns the amount actually transferred,
          *  in case of a fee. On success, the vToken holds an additional `actualMintAmount`
@@ -746,7 +746,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          *  We call `doTransferIn` for the payer and the mintAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between ERC-20 and CORE underlying.
          *  `doTransferIn` reverts if anything goes wrong, since we can't be sure if
          *  side-effects occurred. The function returns the amount actually transferred,
          *  in case of a fee. On success, the vToken holds an additional `actualMintAmount`
@@ -917,7 +917,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We invoke doTransferOut for the redeemer and the redeemAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between ERC-20 and CORE underlying.
          *  On success, the vToken has redeemAmount less of cash.
          *  doTransferOut reverts if anything goes wrong, since we can't be sure if side effects occurred.
          */
@@ -1041,7 +1041,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We invoke doTransferOut for the borrower and the borrowAmount.
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between ERC-20 and CORE underlying.
          *  On success, the vToken borrowAmount less of cash.
          *  doTransferOut reverts if anything goes wrong, since we can't be sure if side effects occurred.
          */
@@ -1140,7 +1140,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We call doTransferIn for the payer and the repayAmount
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between ERC-20 and CORE underlying.
          *  On success, the vToken holds an additional repayAmount of cash.
          *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
          *   it returns the amount actually transferred, in case of a fee.
@@ -1433,7 +1433,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We call doTransferIn for the caller and the addAmount
-         *  Note: The vToken must handle variations between BEP-20 and BNB underlying.
+         *  Note: The vToken must handle variations between ERC-20 and CORE underlying.
          *  On success, the vToken holds an additional addAmount of cash.
          *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
          *  it returns the amount actually transferred, in case of a fee.

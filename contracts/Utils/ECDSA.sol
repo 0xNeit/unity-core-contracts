@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Adapted from OpenZeppelin Contracts v4.3.2 (utils/cryptography/ECDSA.sol)
 
-// SPDX-Copyright-Text: OpenZeppelin, 2021
-// SPDX-Copyright-Text: Venus, 2021
+// SPDX-Copyright-Text: OpenZeppelin, 2023
+// SPDX-Copyright-Text: UnityCore, 2023
 
 pragma solidity ^0.5.16;
 

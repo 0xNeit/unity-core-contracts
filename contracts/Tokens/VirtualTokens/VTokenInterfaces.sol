@@ -277,14 +277,14 @@ contract VTokenInterface is VTokenStorage {
     function exchangeRateStored() public view returns (uint);
 }
 
-contract VBep20Storage {
+contract VErc20Storage {
     /**
      * @notice Underlying asset for this VToken
      */
     address public underlying;
 }
 
-contract VBep20Interface is VBep20Storage {
+contract VErc20Interface is VErc20Storage {
     /*** User Interface ***/
 
     function mint(uint mintAmount) external returns (uint);
