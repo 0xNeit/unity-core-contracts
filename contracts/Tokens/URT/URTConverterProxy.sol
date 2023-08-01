@@ -1,15 +1,15 @@
 pragma solidity ^0.5.16;
 
-import "./VRTConverterStorage.sol";
+import "./URTConverterStorage.sol";
 
-contract VRTConverterProxy is VRTConverterAdminStorage {
+contract URTConverterProxy is URTConverterAdminStorage {
     /**
      * @notice Emitted when pendingImplementation is changed
      */
     event NewPendingImplementation(address oldPendingImplementation, address newPendingImplementation);
 
     /**
-     * @notice Emitted when pendingImplementation is accepted, which means VRTConverter implementation is updated
+     * @notice Emitted when pendingImplementation is accepted, which means URTConverter implementation is updated
      */
     event NewImplementation(address oldImplementation, address newImplementation);
 
@@ -25,12 +25,12 @@ contract VRTConverterProxy is VRTConverterAdminStorage {
 
     constructor(
         address implementation_,
-        address _vrtAddress,
+        address _urtAddress,
         address _xvsAddress,
         uint256 _conversionRatio,
         uint256 _conversionStartTime,
         uint256 _conversionPeriod
-    ) public nonZeroAddress(implementation_) nonZeroAddress(_vrtAddress) nonZeroAddress(_xvsAddress) {
+    ) public nonZeroAddress(implementation_) nonZeroAddress(_urtAddress) nonZeroAddress(_xvsAddress) {
         // Creator of the contract is admin during initialization
         admin = msg.sender;
 
@@ -42,7 +42,7 @@ contract VRTConverterProxy is VRTConverterAdminStorage {
             implementation_,
             abi.encodeWithSignature(
                 "initialize(address,address,uint256,uint256,uint256)",
-                _vrtAddress,
+                _urtAddress,
                 _xvsAddress,
                 _conversionRatio,
                 _conversionStartTime,
@@ -61,8 +61,8 @@ contract VRTConverterProxy is VRTConverterAdminStorage {
      * @param implementation_ The address of the new implementation for delegation
      */
     function _setImplementation(address implementation_) public {
-        require(msg.sender == admin, "VRTConverterProxy::_setImplementation: admin only");
-        require(implementation_ != address(0), "VRTConverterProxy::_setImplementation: invalid implementation address");
+        require(msg.sender == admin, "URTConverterProxy::_setImplementation: admin only");
+        require(implementation_ != address(0), "URTConverterProxy::_setImplementation: invalid implementation address");
 
         address oldImplementation = implementation;
         implementation = implementation_;
@@ -101,7 +101,7 @@ contract VRTConverterProxy is VRTConverterAdminStorage {
     }
 
     /**
-     * @notice Accepts new implementation of VRTConverter. msg.sender must be pendingImplementation
+     * @notice Accepts new implementation of URTConverter. msg.sender must be pendingImplementation
      * @dev Admin function for new implementation to accept it's role as implementation
      * @dev return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */

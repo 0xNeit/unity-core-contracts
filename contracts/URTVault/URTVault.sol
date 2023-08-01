@@ -2,16 +2,16 @@ pragma solidity 0.5.16;
 
 import "../Utils/SafeBEP20.sol";
 import "../Utils/IBEP20.sol";
-import "./VRTVaultStorage.sol";
+import "./URTVaultStorage.sol";
 import "../Governance/AccessControlledV5.sol";
 
-interface IVRTVaultProxy {
+interface IURTVaultProxy {
     function _acceptImplementation() external;
 
     function admin() external returns (address);
 }
 
-contract VRTVault is VRTVaultStorage, AccessControlledV5 {
+contract URTVault is URTVaultStorage, AccessControlledV5 {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
 
@@ -24,10 +24,10 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
     /// @notice Event emitted when vault is resumed after pause
     event VaultResumed(address indexed admin);
 
-    /// @notice Event emitted on VRT deposit
+    /// @notice Event emitted on URT deposit
     event Deposit(address indexed user, uint256 amount);
 
-    /// @notice Event emitted when accruedInterest and VRT PrincipalAmount is withrawn
+    /// @notice Event emitted when accruedInterest and URT PrincipalAmount is withrawn
     event Withdraw(
         address indexed user,
         uint256 withdrawnAmount,
@@ -53,17 +53,17 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
         _;
     }
 
-    function initialize(address _vrtAddress, uint256 _interestRatePerBlock) public {
+    function initialize(address _urtAddress, uint256 _interestRatePerBlock) public {
         require(msg.sender == admin, "only admin may initialize the Vault");
-        require(_vrtAddress != address(0), "vrtAddress cannot be Zero");
+        require(_urtAddress != address(0), "urtAddress cannot be Zero");
         require(interestRatePerBlock == 0, "Vault may only be initialized once");
 
         // Set initial exchange rate
         interestRatePerBlock = _interestRatePerBlock;
         require(interestRatePerBlock > 0, "interestRate Per Block must be greater than zero.");
 
-        // Set the VRT
-        vrt = IBEP20(_vrtAddress);
+        // Set the URT
+        urt = IBEP20(_urtAddress);
         _notEntered = true;
     }
 
@@ -119,7 +119,7 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice Deposit VRT to VRTVault for a fixed-interest-rate
+     * @notice Deposit URT to URTVault for a fixed-interest-rate
      * @param depositAmount The amount to deposit to vault
      */
     function deposit(uint256 depositAmount) external nonReentrant isInitialized isActive {
@@ -138,13 +138,13 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
             user.totalPrincipalAmount = user.totalPrincipalAmount.add(depositAmount);
 
             if (accruedInterest > 0) {
-                uint256 vrtBalance = vrt.balanceOf(address(this));
+                uint256 urtBalance = urt.balanceOf(address(this));
                 require(
-                    vrtBalance >= accruedInterest,
-                    "Failed to transfer accruedInterest, Insufficient VRT in Vault."
+                    urtBalance >= accruedInterest,
+                    "Failed to transfer accruedInterest, Insufficient URT in Vault."
                 );
                 emit Claim(userAddress, accruedInterest);
-                vrt.safeTransfer(user.userAddress, accruedInterest);
+                urt.safeTransfer(user.userAddress, accruedInterest);
             }
         }
 
@@ -155,13 +155,13 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
             user.accrualStartBlockNumber = lastAccruingBlock;
         }
         emit Deposit(userAddress, depositAmount);
-        vrt.safeTransferFrom(userAddress, address(this), depositAmount);
+        urt.safeTransferFrom(userAddress, address(this), depositAmount);
     }
 
     /**
-     * @notice get accruedInterest of the user's VRTDeposits in the Vault
+     * @notice get accruedInterest of the user's URTDeposits in the Vault
      * @param userAddress Address of User in the the Vault
-     * @return The interest accrued, in VRT
+     * @return The interest accrued, in URT
      */
     function getAccruedInterest(
         address userAddress
@@ -175,10 +175,10 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice get accruedInterest of the user's VRTDeposits in the Vault
+     * @notice get accruedInterest of the user's URTDeposits in the Vault
      * @param totalPrincipalAmount of the User
      * @param accrualStartBlockNumber of the User
-     * @return The interest accrued, in VRT
+     * @return The interest accrued, in URT
      */
     function computeAccruedInterest(
         uint256 totalPrincipalAmount,
@@ -202,14 +202,14 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice claim the accruedInterest of the user's VRTDeposits in the Vault
+     * @notice claim the accruedInterest of the user's URTDeposits in the Vault
      */
     function claim() external nonReentrant isInitialized userHasPosition(msg.sender) isActive {
         _claim(msg.sender);
     }
 
     /**
-     * @notice claim the accruedInterest of the user's VRTDeposits in the Vault
+     * @notice claim the accruedInterest of the user's URTDeposits in the Vault
      * @param account The account for which to claim rewards
      */
     function claim(address account) external nonReentrant isInitialized userHasPosition(account) isActive {
@@ -224,8 +224,8 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
         uint256 accruedInterest = getAccruedInterest(account);
         if (accruedInterest > 0) {
             UserInfo storage user = userInfo[account];
-            uint256 vrtBalance = vrt.balanceOf(address(this));
-            require(vrtBalance >= accruedInterest, "Failed to transfer VRT, Insufficient VRT in Vault.");
+            uint256 urtBalance = urt.balanceOf(address(this));
+            require(urtBalance >= accruedInterest, "Failed to transfer URT, Insufficient URT in Vault.");
             emit Claim(account, accruedInterest);
             uint256 currentBlock_ = getBlockNumber();
             if (lastAccruingBlock > currentBlock_) {
@@ -233,12 +233,12 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
             } else {
                 user.accrualStartBlockNumber = lastAccruingBlock;
             }
-            vrt.safeTransfer(user.userAddress, accruedInterest);
+            urt.safeTransfer(user.userAddress, accruedInterest);
         }
     }
 
     /**
-     * @notice withdraw accruedInterest and totalPrincipalAmount of the user's VRTDeposit in the Vault
+     * @notice withdraw accruedInterest and totalPrincipalAmount of the user's URTDeposit in the Vault
      */
     function withdraw() external nonReentrant isInitialized userHasPosition(msg.sender) isActive {
         address userAddress = msg.sender;
@@ -247,15 +247,15 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
         UserInfo storage user = userInfo[userAddress];
 
         uint256 totalPrincipalAmount = user.totalPrincipalAmount;
-        uint256 vrtForWithdrawal = accruedInterest.add(totalPrincipalAmount);
+        uint256 urtForWithdrawal = accruedInterest.add(totalPrincipalAmount);
         user.totalPrincipalAmount = 0;
         user.accrualStartBlockNumber = getBlockNumber();
 
-        uint256 vrtBalance = vrt.balanceOf(address(this));
-        require(vrtBalance >= vrtForWithdrawal, "Failed to transfer VRT, Insufficient VRT in Vault.");
+        uint256 urtBalance = urt.balanceOf(address(this));
+        require(urtBalance >= urtForWithdrawal, "Failed to transfer URT, Insufficient URT in Vault.");
 
-        emit Withdraw(userAddress, vrtForWithdrawal, totalPrincipalAmount, accruedInterest);
-        vrt.safeTransfer(user.userAddress, vrtForWithdrawal);
+        emit Withdraw(userAddress, urtForWithdrawal, totalPrincipalAmount, accruedInterest);
+        urt.safeTransfer(user.userAddress, urtForWithdrawal);
     }
 
     /**
@@ -300,9 +300,9 @@ contract VRTVault is VRTVaultStorage, AccessControlledV5 {
 
     /*** Admin Functions ***/
 
-    function _become(IVRTVaultProxy vrtVaultProxy) external {
-        require(msg.sender == vrtVaultProxy.admin(), "only proxy admin can change brains");
-        vrtVaultProxy._acceptImplementation();
+    function _become(IURTVaultProxy urtVaultProxy) external {
+        require(msg.sender == urtVaultProxy.admin(), "only proxy admin can change brains");
+        urtVaultProxy._acceptImplementation();
     }
 
     /**

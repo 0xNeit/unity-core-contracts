@@ -4,7 +4,7 @@ import "../../Utils/SafeMath.sol";
 import "../../Utils/IBEP20.sol";
 import "../XVS/IXVSVesting.sol";
 
-contract VRTConverterAdminStorage {
+contract URTConverterAdminStorage {
     /**
      * @notice Administrator for this contract
      */
@@ -16,25 +16,25 @@ contract VRTConverterAdminStorage {
     address public pendingAdmin;
 
     /**
-     * @notice Active brains of VRTConverter
+     * @notice Active brains of URTConverter
      */
     address public implementation;
 
     /**
-     * @notice Pending brains of VRTConverter
+     * @notice Pending brains of URTConverter
      */
     address public pendingImplementation;
 }
 
-contract VRTConverterStorage is VRTConverterAdminStorage {
+contract URTConverterStorage is URTConverterAdminStorage {
     /// @notice Guard variable for re-entrancy checks
     bool public _notEntered;
 
     /// @notice indicator to check if the contract is initialized
     bool public initialized;
 
-    /// @notice The VRT TOKEN!
-    IBEP20 public vrt;
+    /// @notice The URT TOKEN!
+    IBEP20 public urt;
 
     /// @notice The XVS TOKEN!
     IBEP20 public xvs;
@@ -42,11 +42,11 @@ contract VRTConverterStorage is VRTConverterAdminStorage {
     /// @notice XVSVesting Contract reference
     IXVSVesting public xvsVesting;
 
-    /// @notice Conversion ratio from VRT to XVS with decimal 18
+    /// @notice Conversion ratio from URT to XVS with decimal 18
     uint256 public conversionRatio;
 
-    /// @notice total VRT converted to XVS
-    uint256 public totalVrtConverted;
+    /// @notice total URT converted to XVS
+    uint256 public totalUrtConverted;
 
     /// @notice Conversion Start time in EpochSeconds
     uint256 public conversionStartTime;

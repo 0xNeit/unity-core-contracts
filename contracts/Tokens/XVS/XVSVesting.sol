@@ -22,8 +22,8 @@ contract XVSVesting is XVSVestingStorage {
     /// @notice Emitted when XVSVested is claimed by recipient
     event VestedTokensClaimed(address recipient, uint256 amountClaimed);
 
-    /// @notice Emitted when vrtConversionAddress is set
-    event VRTConversionSet(address vrtConversionAddress);
+    /// @notice Emitted when urtConversionAddress is set
+    event URTConversionSet(address urtConversionAddress);
 
     /// @notice Emitted when XVS is deposited for vesting
     event XVSVested(address indexed recipient, uint256 startTime, uint256 amount, uint256 withdrawnAmount);
@@ -58,15 +58,15 @@ contract XVSVesting is XVSVestingStorage {
     }
 
     /**
-     * @notice sets VRTConverter Address
-     * @dev Note: If VRTConverter is not set, then Vesting is not allowed
-     * @param _vrtConversionAddress The VRTConverterProxy Address
+     * @notice sets URTConverter Address
+     * @dev Note: If URTConverter is not set, then Vesting is not allowed
+     * @param _urtConversionAddress The URTConverterProxy Address
      */
-    function setVRTConverter(address _vrtConversionAddress) public {
+    function setURTConverter(address _urtConversionAddress) public {
         require(msg.sender == admin, "only admin may initialize the Vault");
-        require(_vrtConversionAddress != address(0), "vrtConversionAddress cannot be Zero");
-        vrtConversionAddress = _vrtConversionAddress;
-        emit VRTConversionSet(_vrtConversionAddress);
+        require(_urtConversionAddress != address(0), "urtConversionAddress cannot be Zero");
+        urtConversionAddress = _urtConversionAddress;
+        emit URTConversionSet(_urtConversionAddress);
     }
 
     modifier onlyAdmin() {
@@ -74,8 +74,8 @@ contract XVSVesting is XVSVestingStorage {
         _;
     }
 
-    modifier onlyVrtConverter() {
-        require(msg.sender == vrtConversionAddress, "only VRTConversion Address can call the function");
+    modifier onlyUrtConverter() {
+        require(msg.sender == urtConversionAddress, "only URTConversion Address can call the function");
         _;
     }
 
@@ -92,7 +92,7 @@ contract XVSVesting is XVSVestingStorage {
     function deposit(
         address recipient,
         uint depositAmount
-    ) external isInitialized onlyVrtConverter nonZeroAddress(recipient) {
+    ) external isInitialized onlyUrtConverter nonZeroAddress(recipient) {
         require(depositAmount > 0, "Deposit amount must be non-zero");
 
         VestingRecord[] storage vestingsOfRecipient = vestings[recipient];

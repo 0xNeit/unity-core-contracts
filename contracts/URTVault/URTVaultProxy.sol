@@ -1,15 +1,15 @@
 pragma solidity ^0.5.16;
 
-import "./VRTVaultStorage.sol";
+import "./URTVaultStorage.sol";
 
-contract VRTVaultProxy is VRTVaultAdminStorage {
+contract URTVaultProxy is URTVaultAdminStorage {
     /**
      * @notice Emitted when pendingImplementation is changed
      */
     event NewPendingImplementation(address oldPendingImplementation, address newPendingImplementation);
 
     /**
-     * @notice Emitted when pendingImplementation is accepted, which means VRT Vault implementation is updated
+     * @notice Emitted when pendingImplementation is accepted, which means URT Vault implementation is updated
      */
     event NewImplementation(address oldImplementation, address newImplementation);
 
@@ -23,7 +23,7 @@ contract VRTVaultProxy is VRTVaultAdminStorage {
      */
     event NewAdmin(address oldAdmin, address newAdmin);
 
-    constructor(address implementation_, address vrtAddress_, uint256 interestRatePerBlock_) public {
+    constructor(address implementation_, address urtAddress_, uint256 interestRatePerBlock_) public {
         // Creator of the contract is admin during initialization
         admin = msg.sender;
 
@@ -33,7 +33,7 @@ contract VRTVaultProxy is VRTVaultAdminStorage {
         // First delegate gets to initialize the delegator (i.e. storage contract)
         delegateTo(
             implementation_,
-            abi.encodeWithSignature("initialize(address,uint256)", vrtAddress_, interestRatePerBlock_)
+            abi.encodeWithSignature("initialize(address,uint256)", urtAddress_, interestRatePerBlock_)
         );
     }
 
@@ -42,8 +42,8 @@ contract VRTVaultProxy is VRTVaultAdminStorage {
      * @param implementation_ The address of the new implementation for delegation
      */
     function _setImplementation(address implementation_) public {
-        require(msg.sender == admin, "VRTVaultProxy::_setImplementation: admin only");
-        require(implementation_ != address(0), "VRTVaultProxy::_setImplementation: invalid implementation address");
+        require(msg.sender == admin, "URTVaultProxy::_setImplementation: admin only");
+        require(implementation_ != address(0), "URTVaultProxy::_setImplementation: invalid implementation address");
 
         address oldImplementation = implementation;
         implementation = implementation_;
@@ -80,7 +80,7 @@ contract VRTVaultProxy is VRTVaultAdminStorage {
     }
 
     /**
-     * @notice Accepts new implementation of VRT Vault. msg.sender must be pendingImplementation
+     * @notice Accepts new implementation of URT Vault. msg.sender must be pendingImplementation
      * @dev Admin function for new implementation to accept it's role as implementation
      */
     function _acceptImplementation() public {

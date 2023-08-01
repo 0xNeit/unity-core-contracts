@@ -2,7 +2,7 @@ pragma solidity ^0.5.16;
 import "../Utils/SafeMath.sol";
 import "../Utils/IBEP20.sol";
 
-contract VRTVaultAdminStorage {
+contract URTVaultAdminStorage {
     /**
      * @notice Administrator for this contract
      */
@@ -14,7 +14,7 @@ contract VRTVaultAdminStorage {
     address public pendingAdmin;
 
     /**
-     * @notice Active brains of VRT Vault
+     * @notice Active brains of URT Vault
      */
     address public implementation;
 
@@ -24,15 +24,15 @@ contract VRTVaultAdminStorage {
     address public pendingImplementation;
 }
 
-contract VRTVaultStorage is VRTVaultAdminStorage {
+contract URTVaultStorage is URTVaultAdminStorage {
     /// @notice Guard variable for re-entrancy checks
     bool public _notEntered;
 
     /// @notice pause indicator for Vault
     bool public vaultPaused;
 
-    /// @notice The VRT TOKEN!
-    IBEP20 public vrt;
+    /// @notice The URT TOKEN!
+    IBEP20 public urt;
 
     /// @notice interestRate for accrual - per Block
     uint256 public interestRatePerBlock;

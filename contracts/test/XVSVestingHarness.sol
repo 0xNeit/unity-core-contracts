@@ -16,8 +16,8 @@ contract XVSVestingHarness is XVSVesting {
         xvs.safeTransferFrom(address(this), recoveryAddress, xvsBalance);
     }
 
-    function overWriteVRTConversionAddress() public {
-        vrtConversionAddress = ZERO_ADDRESS;
+    function overWriteURTConversionAddress() public {
+        urtConversionAddress = ZERO_ADDRESS;
     }
 
     function computeWithdrawableAmount(

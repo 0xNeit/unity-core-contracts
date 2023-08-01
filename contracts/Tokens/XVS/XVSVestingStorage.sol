@@ -42,8 +42,8 @@ contract XVSVestingStorage is XVSVestingAdminStorage {
     /// @notice The XVS TOKEN!
     IBEP20 public xvs;
 
-    /// @notice VRTConversion Contract Address
-    address public vrtConversionAddress;
+    /// @notice URTConversion Contract Address
+    address public urtConversionAddress;
 
     /// @notice mapping of VestingRecord(s) for user(s)
     mapping(address => VestingRecord[]) public vestings;

@@ -1,19 +1,19 @@
 pragma solidity ^0.5.16;
 
-import "../../contracts/VRTVault/VRTVault.sol";
+import "../../contracts/URTVault/URTVault.sol";
 
-contract VRTVaultHarness is VRTVault {
+contract URTVaultHarness is URTVault {
     uint public blockNumber;
 
-    constructor() public VRTVault() {}
+    constructor() public URTVault() {}
 
     function overrideInterestRatePerBlock(uint256 _interestRatePerBlock) public {
         interestRatePerBlock = _interestRatePerBlock;
     }
 
     function balanceOfUser() public view returns (uint256, address) {
-        uint256 vrtBalanceOfUser = vrt.balanceOf(msg.sender);
-        return (vrtBalanceOfUser, msg.sender);
+        uint256 urtBalanceOfUser = urt.balanceOf(msg.sender);
+        return (urtBalanceOfUser, msg.sender);
     }
 
     function harnessFastForward(uint256 blocks) public returns (uint256) {
