@@ -25,8 +25,8 @@ contract UAIVaultAdminStorage {
 }
 
 contract UAIVaultStorage is UAIVaultAdminStorage {
-    /// @notice The XVS TOKEN!
-    IBEP20 public xvs;
+    /// @notice The UCORE TOKEN!
+    IBEP20 public ucore;
 
     /// @notice The UAI TOKEN!
     IBEP20 public uai;
@@ -34,11 +34,11 @@ contract UAIVaultStorage is UAIVaultAdminStorage {
     /// @notice Guard variable for re-entrancy checks
     bool internal _notEntered;
 
-    /// @notice XVS balance of vault
-    uint256 public xvsBalance;
+    /// @notice UCORE balance of vault
+    uint256 public ucoreBalance;
 
-    /// @notice Accumulated XVS per share
-    uint256 public accXVSPerShare;
+    /// @notice Accumulated UCORE per share
+    uint256 public accUCOREPerShare;
 
     //// pending rewards awaiting anyone to update
     uint256 public pendingRewards;

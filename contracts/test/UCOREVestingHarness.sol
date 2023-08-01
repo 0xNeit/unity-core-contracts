@@ -1,19 +1,19 @@
 pragma solidity ^0.5.16;
 
-import "../../contracts/Tokens/XVS/XVSVesting.sol";
+import "../../contracts/Tokens/UCORE/UCOREVesting.sol";
 
-contract XVSVestingHarness is XVSVesting {
+contract UCOREVestingHarness is UCOREVesting {
     address public constant ZERO_ADDRESS = 0x0000000000000000000000000000000000000000;
 
-    constructor() public XVSVesting() {
+    constructor() public UCOREVesting() {
         admin = msg.sender;
     }
 
     uint public blockNumber;
 
-    function recoverXVS(address recoveryAddress) public payable {
-        uint256 xvsBalance = xvs.balanceOf(address(this));
-        xvs.safeTransferFrom(address(this), recoveryAddress, xvsBalance);
+    function recoverUCORE(address recoveryAddress) public payable {
+        uint256 ucoreBalance = ucore.balanceOf(address(this));
+        ucore.safeTransferFrom(address(this), recoveryAddress, ucoreBalance);
     }
 
     function overWriteURTConversionAddress() public {

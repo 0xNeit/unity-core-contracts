@@ -6,7 +6,7 @@ import "../Tokens/VTokens/VToken.sol";
 import "../Oracle/PriceOracle.sol";
 import "../Tokens/EIP20Interface.sol";
 import "../Governance/GovernorAlpha.sol";
-import "../Tokens/XVS/XVS.sol";
+import "../Tokens/UCORE/UCORE.sol";
 import "../Controller/ControllerInterface.sol";
 import "../Utils/SafeMath.sol";
 
@@ -38,8 +38,8 @@ contract VenusLens is ExponentialNoError {
         uint underlyingDecimals;
         uint venusSupplySpeed;
         uint venusBorrowSpeed;
-        uint dailySupplyXvs;
-        uint dailyBorrowXvs;
+        uint dailySupplyUCore;
+        uint dailyBorrowUCore;
     }
 
     struct VTokenBalances {
@@ -85,13 +85,13 @@ contract VenusLens is ExponentialNoError {
         bool executed;
     }
 
-    struct XVSBalanceMetadata {
+    struct UCOREBalanceMetadata {
         uint balance;
         uint votes;
         address delegate;
     }
 
-    struct XVSBalanceMetadataExt {
+    struct UCOREBalanceMetadataExt {
         uint balance;
         uint votes;
         address delegate;
@@ -172,8 +172,8 @@ contract VenusLens is ExponentialNoError {
                 underlyingDecimals: underlyingDecimals,
                 venusSupplySpeed: venusSupplySpeedPerBlock,
                 venusBorrowSpeed: venusBorrowSpeedPerBlock,
-                dailySupplyXvs: venusSupplySpeedPerBlock.mul(BLOCKS_PER_DAY),
-                dailyBorrowXvs: venusBorrowSpeedPerBlock.mul(BLOCKS_PER_DAY)
+                dailySupplyUCore: venusSupplySpeedPerBlock.mul(BLOCKS_PER_DAY),
+                dailyBorrowUCore: venusBorrowSpeedPerBlock.mul(BLOCKS_PER_DAY)
             });
     }
 
@@ -192,15 +192,15 @@ contract VenusLens is ExponentialNoError {
     }
 
     /**
-     * @notice Get amount of XVS distributed daily to an account
-     * @param account Address of account to fetch the daily XVS distribution
+     * @notice Get amount of UCORE distributed daily to an account
+     * @param account Address of account to fetch the daily UCORE distribution
      * @param controllerAddress Address of the controller proxy
-     * @return Amount of XVS distributed daily to an account
+     * @return Amount of UCORE distributed daily to an account
      */
-    function getDailyXVS(address payable account, address controllerAddress) external returns (uint) {
+    function getDailyUCORE(address payable account, address controllerAddress) external returns (uint) {
         ControllerInterface controllerInstance = ControllerInterface(controllerAddress);
         VToken[] memory vTokens = controllerInstance.getAllMarkets();
-        uint dailyXvsPerAccount = 0;
+        uint dailyUCorePerAccount = 0;
 
         for (uint i = 0; i < vTokens.length; i++) {
             VToken vToken = vTokens[i];
@@ -214,30 +214,30 @@ contract VenusLens is ExponentialNoError {
                 uint underlyingPrice = underlyingPriceResponse.underlyingPrice;
                 Exp memory underlyingPriceMantissa = Exp({ mantissa: underlyingPrice });
 
-                //get dailyXvsSupplyMarket
-                uint dailyXvsSupplyMarket = 0;
+                //get dailyUCoreSupplyMarket
+                uint dailyUCoreSupplyMarket = 0;
                 uint supplyInUsd = mul_ScalarTruncate(underlyingPriceMantissa, vTokenBalanceInfo.balanceOfUnderlying);
                 uint marketTotalSupply = (metaDataItem.totalSupply.mul(metaDataItem.exchangeRateCurrent)).div(1e18);
                 uint marketTotalSupplyInUsd = mul_ScalarTruncate(underlyingPriceMantissa, marketTotalSupply);
 
                 if (marketTotalSupplyInUsd > 0) {
-                    dailyXvsSupplyMarket = (metaDataItem.dailySupplyXvs.mul(supplyInUsd)).div(marketTotalSupplyInUsd);
+                    dailyUCoreSupplyMarket = (metaDataItem.dailySupplyUCore.mul(supplyInUsd)).div(marketTotalSupplyInUsd);
                 }
 
-                //get dailyXvsBorrowMarket
-                uint dailyXvsBorrowMarket = 0;
+                //get dailyUCoreBorrowMarket
+                uint dailyUCoreBorrowMarket = 0;
                 uint borrowsInUsd = mul_ScalarTruncate(underlyingPriceMantissa, vTokenBalanceInfo.borrowBalanceCurrent);
                 uint marketTotalBorrowsInUsd = mul_ScalarTruncate(underlyingPriceMantissa, metaDataItem.totalBorrows);
 
                 if (marketTotalBorrowsInUsd > 0) {
-                    dailyXvsBorrowMarket = (metaDataItem.dailyBorrowXvs.mul(borrowsInUsd)).div(marketTotalBorrowsInUsd);
+                    dailyUCoreBorrowMarket = (metaDataItem.dailyBorrowUCore.mul(borrowsInUsd)).div(marketTotalBorrowsInUsd);
                 }
 
-                dailyXvsPerAccount += dailyXvsSupplyMarket + dailyXvsBorrowMarket;
+                dailyUCorePerAccount += dailyUCoreSupplyMarket + dailyUCoreBorrowMarket;
             }
         }
 
-        return dailyXvsPerAccount;
+        return dailyUCorePerAccount;
     }
 
     /**
@@ -431,57 +431,57 @@ contract VenusLens is ExponentialNoError {
     }
 
     /**
-     * @notice Query the XVSBalance info of an account
-     * @param xvs XVS contract address
+     * @notice Query the UCOREBalance info of an account
+     * @param ucore UCORE contract address
      * @param account Account address
-     * @return Struct with XVS balance and voter details
+     * @return Struct with UCORE balance and voter details
      */
-    function getXVSBalanceMetadata(XVS xvs, address account) external view returns (XVSBalanceMetadata memory) {
+    function getUCOREBalanceMetadata(UCORE ucore, address account) external view returns (UCOREBalanceMetadata memory) {
         return
-            XVSBalanceMetadata({
-                balance: xvs.balanceOf(account),
-                votes: uint256(xvs.getCurrentVotes(account)),
-                delegate: xvs.delegates(account)
+            UCOREBalanceMetadata({
+                balance: ucore.balanceOf(account),
+                votes: uint256(ucore.getCurrentVotes(account)),
+                delegate: ucore.delegates(account)
             });
     }
 
     /**
-     * @notice Query the XVSBalance extended info of an account
-     * @param xvs XVS contract address
+     * @notice Query the UCOREBalance extended info of an account
+     * @param ucore UCORE contract address
      * @param controller Controller proxy contract address
      * @param account Account address
-     * @return Struct with XVS balance and voter details and XVS allocation
+     * @return Struct with UCORE balance and voter details and UCORE allocation
      */
-    function getXVSBalanceMetadataExt(
-        XVS xvs,
+    function getUCOREBalanceMetadataExt(
+        UCORE ucore,
         ControllerInterface controller,
         address account
-    ) external returns (XVSBalanceMetadataExt memory) {
-        uint balance = xvs.balanceOf(account);
+    ) external returns (UCOREBalanceMetadataExt memory) {
+        uint balance = ucore.balanceOf(account);
         controller.claimVenus(account);
-        uint newBalance = xvs.balanceOf(account);
+        uint newBalance = ucore.balanceOf(account);
         uint accrued = controller.venusAccrued(account);
-        uint total = add_(accrued, newBalance, "sum xvs total");
+        uint total = add_(accrued, newBalance, "sum ucore total");
         uint allocated = sub_(total, balance, "sub allocated");
 
         return
-            XVSBalanceMetadataExt({
+            UCOREBalanceMetadataExt({
                 balance: balance,
-                votes: uint256(xvs.getCurrentVotes(account)),
-                delegate: xvs.delegates(account),
+                votes: uint256(ucore.getCurrentVotes(account)),
+                delegate: ucore.delegates(account),
                 allocated: allocated
             });
     }
 
     /**
      * @notice Query the voting power for an account at a specific list of block numbers
-     * @param xvs XVS contract address
+     * @param ucore UCORE contract address
      * @param account Address of the account
      * @param blockNumbers Array of blocks to query
      * @return Array of VenusVotes structs with block number and vote count
      */
     function getVenusVotes(
-        XVS xvs,
+        UCORE ucore,
         address account,
         uint32[] calldata blockNumbers
     ) external view returns (VenusVotes[] memory) {
@@ -489,7 +489,7 @@ contract VenusLens is ExponentialNoError {
         for (uint i = 0; i < blockNumbers.length; i++) {
             res[i] = VenusVotes({
                 blockNumber: uint256(blockNumbers[i]),
-                votes: uint256(xvs.getPriorVotes(account, blockNumbers[i]))
+                votes: uint256(ucore.getPriorVotes(account, blockNumbers[i]))
             });
         }
         return res;
@@ -554,7 +554,7 @@ contract VenusLens is ExponentialNoError {
      * @param vToken Address of a vToken
      * @param supplier Address of the account supplying
      * @param controller Address of the controller proxy
-     * @return Undistributed earned XVS from supplies
+     * @return Undistributed earned UCORE from supplies
      */
     function distributeSupplierVenus(
         VenusMarketState memory supplyState,
@@ -581,7 +581,7 @@ contract VenusLens is ExponentialNoError {
      * @param borrower Address of the account borrowing
      * @param marketBorrowIndex vToken Borrow index
      * @param controller Address of the controller proxy
-     * @return Undistributed earned XVS from borrows
+     * @return Undistributed earned UCORE from borrows
      */
     function distributeBorrowerVenus(
         VenusMarketState memory borrowState,
@@ -602,8 +602,8 @@ contract VenusLens is ExponentialNoError {
     }
 
     /**
-     * @notice Calculate the total XVS tokens pending and accrued by a user account
-     * @param holder Account to query pending XVS
+     * @notice Calculate the total UCORE tokens pending and accrued by a user account
+     * @param holder Account to query pending UCORE
      * @param controller Address of the controller
      * @return Reward object contraining the totalRewards and pending rewards for each market
      */
@@ -615,7 +615,7 @@ contract VenusLens is ExponentialNoError {
         ClaimVenusLocalVariables memory vars;
         RewardSummary memory rewardSummary;
         rewardSummary.distributorAddress = address(controller);
-        rewardSummary.rewardTokenAddress = controller.getXVSAddress();
+        rewardSummary.rewardTokenAddress = controller.getUCOREAddress();
         rewardSummary.totalRewards = controller.venusAccrued(holder);
         rewardSummary.pendingRewards = new PendingReward[](vTokens.length);
         for (uint i; i < vTokens.length; ++i) {

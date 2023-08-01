@@ -64,7 +64,7 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
         uint collateralFactorMantissa;
         /// @notice Per-market mapping of "accounts in this asset"
         mapping(address => bool) accountMembership;
-        /// @notice Whether or not this market receives XVS
+        /// @notice Whether or not this market receives UCORE
         bool isVenus;
     }
 
@@ -102,7 +102,7 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
     /// @notice A list of all markets
     VToken[] public allMarkets;
 
-    /// @notice The rate at which the flywheel distributes XVS, per block
+    /// @notice The rate at which the flywheel distributes UCORE, per block
     uint public venusRate;
 
     /// @notice The portion of venusRate that each market currently receives
@@ -114,13 +114,13 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
     /// @notice The Venus market borrow state for each market
     mapping(address => VenusMarketState) public venusBorrowState;
 
-    /// @notice The Venus supply index for each market for each supplier as of the last time they accrued XVS
+    /// @notice The Venus supply index for each market for each supplier as of the last time they accrued UCORE
     mapping(address => mapping(address => uint)) public venusSupplierIndex;
 
-    /// @notice The Venus borrow index for each market for each borrower as of the last time they accrued XVS
+    /// @notice The Venus borrow index for each market for each borrower as of the last time they accrued UCORE
     mapping(address => mapping(address => uint)) public venusBorrowerIndex;
 
-    /// @notice The XVS accrued but not yet transferred to each user
+    /// @notice The UCORE accrued but not yet transferred to each user
     mapping(address => uint) public venusAccrued;
 
     /// @notice The Address of UAIController
@@ -143,12 +143,12 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
      */
     bool public protocolPaused;
 
-    /// @notice The rate at which the flywheel distributes XVS to UAI Minters, per block (deprecated)
+    /// @notice The rate at which the flywheel distributes UCORE to UAI Minters, per block (deprecated)
     uint private venusUAIRate;
 }
 
 contract ControllerV2Storage is ControllerV1Storage {
-    /// @notice The rate at which the flywheel distributes XVS to UAI Vault, per block
+    /// @notice The rate at which the flywheel distributes UCORE to UAI Vault, per block
     uint public venusUAIVaultRate;
 
     // address of UAI Vault
@@ -181,10 +181,10 @@ contract ControllerV4Storage is ControllerV3Storage {
 }
 
 contract ControllerV5Storage is ControllerV4Storage {
-    /// @notice The portion of XVS that each contributor receives per block (deprecated)
+    /// @notice The portion of UCORE that each contributor receives per block (deprecated)
     mapping(address => uint) private venusContributorSpeeds;
 
-    /// @notice Last block at which a contributor's XVS rewards have been allocated (deprecated)
+    /// @notice Last block at which a contributor's UCORE rewards have been allocated (deprecated)
     mapping(address => uint) private lastContributorBlock;
 }
 

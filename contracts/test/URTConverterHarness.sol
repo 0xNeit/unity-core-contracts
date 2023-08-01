@@ -22,7 +22,7 @@ contract URTConverterHarness is URTConverter {
         conversionEndTime = conversionStartTime.add(conversionPeriod);
     }
 
-    function getXVSRedeemedAmount(uint256 urtAmount) public view returns (uint256) {
-        return urtAmount.mul(conversionRatio).mul(xvsDecimalsMultiplier).div(1e18).div(urtDecimalsMultiplier);
+    function getUCORERedeemedAmount(uint256 urtAmount) public view returns (uint256) {
+        return urtAmount.mul(conversionRatio).mul(ucoreDecimalsMultiplier).div(1e18).div(urtDecimalsMultiplier);
     }
 }

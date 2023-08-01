@@ -4,17 +4,17 @@ import "../Controller/Controller.sol";
 
 contract ControllerScenario is Controller {
     uint public blockNumber;
-    address public xvsAddress;
+    address public ucoreAddress;
     address public uaiAddress;
 
     constructor() public Controller() {}
 
-    function setXVSAddress(address xvsAddress_) public {
-        xvsAddress = xvsAddress_;
+    function setUCOREAddress(address ucoreAddress_) public {
+        ucoreAddress = ucoreAddress_;
     }
 
-    function getXVSAddress() public view returns (address) {
-        return xvsAddress;
+    function getUCOREAddress() public view returns (address) {
+        return ucoreAddress;
     }
 
     function setUAIAddress(address uaiAddress_) public {
@@ -67,7 +67,7 @@ contract ControllerScenario is Controller {
     }
 
     /**
-     * @notice Recalculate and update XVS speeds for all XVS markets
+     * @notice Recalculate and update UCORE speeds for all UCORE markets
      */
     function refreshVenusSpeeds() public {
         VToken[] memory allMarkets_ = allMarkets;

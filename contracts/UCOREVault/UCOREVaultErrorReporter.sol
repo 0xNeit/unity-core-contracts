@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-contract XVSVaultErrorReporter {
+contract UCOREVaultErrorReporter {
     enum Error {
         NO_ERROR,
         UNAUTHORIZED

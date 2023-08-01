@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-contract XVSVaultHarness {
+contract UCOREVaultHarness {
     constructor() public {}
 
     // solhint-disable-next-line no-unused-vars

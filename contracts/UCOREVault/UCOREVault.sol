@@ -4,12 +4,12 @@ pragma experimental ABIEncoderV2;
 import "../Utils/ECDSA.sol";
 import "../Utils/SafeBEP20.sol";
 import "../Utils/IBEP20.sol";
-import "./XVSVaultStorage.sol";
-import "./XVSVaultErrorReporter.sol";
+import "./UCOREVaultStorage.sol";
+import "./UCOREVaultErrorReporter.sol";
 import "../Utils/SafeCast.sol";
 import "../Governance/AccessControlledV5.sol";
 
-interface IXVSStore {
+interface IUCOREStore {
     function safeRewardTransfer(address _token, address _to, uint256 _amount) external;
 
     function setRewardToken(address _tokenAddress, bool status) external;
@@ -17,13 +17,13 @@ interface IXVSStore {
     function rewardTokens(address _tokenAddress) external view returns (bool);
 }
 
-interface IXVSVaultProxy {
+interface IUCOREVaultProxy {
     function _acceptImplementation() external returns (uint);
 
     function admin() external returns (address);
 }
 
-contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
+contract UCOREVault is UCOREVaultStorage, ECDSA, AccessControlledV5 {
     using SafeMath for uint256;
     using SafeCast for uint256;
     using SafeBEP20 for IBEP20;
@@ -47,7 +47,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
     event DelegateVotesChangedV2(address indexed delegate, uint previousBalance, uint newBalance);
 
     /// @notice An event emitted when the reward store address is updated
-    event StoreUpdated(address oldXvs, address oldStore, address newXvs, address newStore);
+    event StoreUpdated(address oldUCore, address oldStore, address newUCore, address newStore);
 
     /// @notice An event emitted when the withdrawal locking period is updated for a pool
     event WithdrawalLockingPeriodUpdated(address indexed rewardToken, uint indexed pid, uint oldPeriod, uint newPeriod);
@@ -163,7 +163,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
         _checkAccessAllowed("add(address,uint256,address,uint256,uint256)");
         _ensureNonzeroAddress(_rewardToken);
         _ensureNonzeroAddress(address(_token));
-        require(address(xvsStore) != address(0), "Store contract address is empty");
+        require(address(ucoreStore) != address(0), "Store contract address is empty");
         require(_allocPoint > 0, "Alloc points must not be zero");
 
         massUpdatePools(_rewardToken);
@@ -194,7 +194,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
         );
         isStakedToken[address(_token)] = true;
 
-        IXVSStore(xvsStore).setRewardToken(_rewardToken, true);
+        IUCOREStore(ucoreStore).setRewardToken(_rewardToken, true);
 
         emit PoolAdded(_rewardToken, poolInfo.length - 1, address(_token), _allocPoint, _rewardPerBlock, _lockPeriod);
     }
@@ -229,7 +229,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
      */
     function setRewardAmountPerBlock(address _rewardToken, uint256 _rewardAmount) external {
         _checkAccessAllowed("setRewardAmountPerBlock(address,uint256)");
-        require(IXVSStore(xvsStore).rewardTokens(_rewardToken), "Invalid reward token");
+        require(IUCOREStore(ucoreStore).rewardTokens(_rewardToken), "Invalid reward token");
         massUpdatePools(_rewardToken);
         uint256 oldReward = rewardTokenAmountsPerBlock[_rewardToken];
         rewardTokenAmountsPerBlock[_rewardToken] = _rewardAmount;
@@ -255,7 +255,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
     }
 
     /**
-     * @notice Deposit XVSVault for XVS allocation
+     * @notice Deposit UCOREVault for UCORE allocation
      * @param _rewardToken The Reward Token Address
      * @param _pid The Pool Index
      * @param _amount The amount to deposit to vault
@@ -279,8 +279,8 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
         user.rewardDebt = _cumulativeReward(user, pool);
 
         // Update Delegate Amount
-        if (address(pool.token) == xvsAddress) {
-            _moveDelegates(address(0), delegates[msg.sender], safe96(_amount, "XVSVault::deposit: votes overflow"));
+        if (address(pool.token) == ucoreAddress) {
+            _moveDelegates(address(0), delegates[msg.sender], safe96(_amount, "UCOREVault::deposit: votes overflow"));
         }
 
         emit Deposit(msg.sender, _rewardToken, _pid, _amount);
@@ -382,7 +382,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
     }
 
     /**
-     * @notice Execute withdrawal to XVSVault for XVS allocation
+     * @notice Execute withdrawal to UCOREVault for UCORE allocation
      * @param _rewardToken The Reward Token Address
      * @param _pid The Pool Index
      */
@@ -404,7 +404,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
         if (beforeUpgradeWithdrawalAmount > 0) {
             _updatePool(_rewardToken, _pid);
             uint256 pending = user.amount.mul(pool.accRewardPerShare).div(1e12).sub(user.rewardDebt);
-            IXVSStore(xvsStore).safeRewardTransfer(_rewardToken, msg.sender, pending);
+            IUCOREStore(ucoreStore).safeRewardTransfer(_rewardToken, msg.sender, pending);
             user.amount = user.amount.sub(beforeUpgradeWithdrawalAmount);
             user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
             pool.token.safeTransfer(address(msg.sender), beforeUpgradeWithdrawalAmount);
@@ -444,7 +444,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
     }
 
     /**
-     * @notice Request withdrawal to XVSVault for XVS allocation
+     * @notice Request withdrawal to UCOREVault for UCORE allocation
      * @param _rewardToken The Reward Token Address
      * @param _pid The Pool Index
      * @param _amount The amount to withdraw from the vault
@@ -474,11 +474,11 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
         user.rewardDebt = _cumulativeReward(user, pool);
 
         // Update Delegate Amount
-        if (address(pool.token) == xvsAddress) {
+        if (address(pool.token) == ucoreAddress) {
             _moveDelegates(
                 delegates[msg.sender],
                 address(0),
-                safe96(_amount, "XVSVault::requestWithdrawal: votes overflow")
+                safe96(_amount, "UCOREVault::requestWithdrawal: votes overflow")
             );
         }
 
@@ -539,7 +539,7 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
     }
 
     /**
-     * @notice View function to see pending XVSs on frontend
+     * @notice View function to see pending UCOREs on frontend
      * @param _rewardToken Reward token address
      * @param _pid Pool index
      * @param _user User address
@@ -647,20 +647,20 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
     }
 
     /**
-     * @notice Get the XVS stake balance of an account (excluding the pending withdrawals)
+     * @notice Get the UCORE stake balance of an account (excluding the pending withdrawals)
      * @param account The address of the account to check
      * @return The balance that user staked
      */
     function getStakeAmount(address account) internal view returns (uint96) {
-        require(xvsAddress != address(0), "XVSVault::getStakeAmount: xvs address is not set");
+        require(ucoreAddress != address(0), "UCOREVault::getStakeAmount: ucore address is not set");
 
-        PoolInfo[] storage poolInfo = poolInfos[xvsAddress];
+        PoolInfo[] storage poolInfo = poolInfos[ucoreAddress];
 
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
-            if (address(poolInfo[pid].token) == address(xvsAddress)) {
-                UserInfo storage user = userInfos[xvsAddress][pid][account];
-                return safe96(user.amount.sub(user.pendingWithdrawals), "XVSVault::getStakeAmount: votes overflow");
+            if (address(poolInfo[pid].token) == address(ucoreAddress)) {
+                UserInfo storage user = userInfos[ucoreAddress][pid][account];
+                return safe96(user.amount.sub(user.pendingWithdrawals), "UCOREVault::getStakeAmount: votes overflow");
             }
         }
         return uint96(0);
@@ -692,13 +692,13 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
         bytes32 s
     ) external isActive {
         bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_TYPEHASH, keccak256(bytes("XVSVault")), getChainId(), address(this))
+            abi.encode(DOMAIN_TYPEHASH, keccak256(bytes("UCOREVault")), getChainId(), address(this))
         );
         bytes32 structHash = keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
         address signatory = ECDSA.recover(digest, v, r, s);
-        require(nonce == nonces[signatory]++, "XVSVault::delegateBySig: invalid nonce");
-        require(block.timestamp <= expiry, "XVSVault::delegateBySig: signature expired");
+        require(nonce == nonces[signatory]++, "UCOREVault::delegateBySig: invalid nonce");
+        require(block.timestamp <= expiry, "UCOREVault::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -727,21 +727,21 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
             if (srcRep != address(0)) {
                 uint32 srcRepNum = numCheckpoints[srcRep];
                 uint96 srcRepOld = srcRepNum > 0 ? checkpoints[srcRep][srcRepNum - 1].votes : 0;
-                uint96 srcRepNew = sub96(srcRepOld, amount, "XVSVault::_moveVotes: vote amount underflows");
+                uint96 srcRepNew = sub96(srcRepOld, amount, "UCOREVault::_moveVotes: vote amount underflows");
                 _writeCheckpoint(srcRep, srcRepNum, srcRepOld, srcRepNew);
             }
 
             if (dstRep != address(0)) {
                 uint32 dstRepNum = numCheckpoints[dstRep];
                 uint96 dstRepOld = dstRepNum > 0 ? checkpoints[dstRep][dstRepNum - 1].votes : 0;
-                uint96 dstRepNew = add96(dstRepOld, amount, "XVSVault::_moveVotes: vote amount overflows");
+                uint96 dstRepNew = add96(dstRepOld, amount, "UCOREVault::_moveVotes: vote amount overflows");
                 _writeCheckpoint(dstRep, dstRepNum, dstRepOld, dstRepNew);
             }
         }
     }
 
     function _writeCheckpoint(address delegatee, uint32 nCheckpoints, uint96 oldVotes, uint96 newVotes) internal {
-        uint32 blockNumber = safe32(block.number, "XVSVault::_writeCheckpoint: block number exceeds 32 bits");
+        uint32 blockNumber = safe32(block.number, "UCOREVault::_writeCheckpoint: block number exceeds 32 bits");
 
         if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
             checkpoints[delegatee][nCheckpoints - 1].votes = newVotes;
@@ -783,13 +783,13 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
     }
 
     /**
-     * @notice Determine the xvs stake balance for an account
+     * @notice Determine the ucore stake balance for an account
      * @param account The address of the account to check
      * @param blockNumber The block number to get the vote balance at
      * @return The balance that user staked
      */
     function getPriorVotes(address account, uint256 blockNumber) external view returns (uint96) {
-        require(blockNumber < block.number, "XVSVault::getPriorVotes: not yet determined");
+        require(blockNumber < block.number, "UCOREVault::getPriorVotes: not yet determined");
 
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -824,25 +824,25 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
 
     /*** Admin Functions ***/
 
-    function _become(IXVSVaultProxy xvsVaultProxy) external {
-        require(msg.sender == xvsVaultProxy.admin(), "only proxy admin can change brains");
-        require(xvsVaultProxy._acceptImplementation() == 0, "change not authorized");
+    function _become(IUCOREVaultProxy ucoreVaultProxy) external {
+        require(msg.sender == ucoreVaultProxy.admin(), "only proxy admin can change brains");
+        require(ucoreVaultProxy._acceptImplementation() == 0, "change not authorized");
     }
 
-    function setXvsStore(address _xvs, address _xvsStore) external onlyAdmin {
-        _ensureNonzeroAddress(_xvs);
-        _ensureNonzeroAddress(_xvsStore);
+    function setUCoreStore(address _ucore, address _ucoreStore) external onlyAdmin {
+        _ensureNonzeroAddress(_ucore);
+        _ensureNonzeroAddress(_ucoreStore);
 
-        address oldXvsContract = xvsAddress;
-        address oldStore = xvsStore;
-        require(oldXvsContract == address(0), "already initialized");
+        address oldUCoreContract = ucoreAddress;
+        address oldStore = ucoreStore;
+        require(oldUCoreContract == address(0), "already initialized");
 
-        xvsAddress = _xvs;
-        xvsStore = _xvsStore;
+        ucoreAddress = _ucore;
+        ucoreStore = _ucoreStore;
 
         _notEntered = true;
 
-        emit StoreUpdated(oldXvsContract, oldStore, _xvs, _xvsStore);
+        emit StoreUpdated(oldUCoreContract, oldStore, _ucore, _ucoreStore);
     }
 
     /**
@@ -871,8 +871,8 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
      * @param amount Reward amount, in reward tokens
      */
     function _transferReward(address rewardToken, address userAddress, uint256 amount) internal {
-        address xvsStore_ = xvsStore;
-        uint256 storeBalance = IBEP20(rewardToken).balanceOf(xvsStore_);
+        address ucoreStore_ = ucoreStore;
+        uint256 storeBalance = IBEP20(rewardToken).balanceOf(ucoreStore_);
         uint256 debtDueToFailedTransfers = pendingRewardTransfers[rewardToken][userAddress];
         uint256 fullAmount = amount.add(debtDueToFailedTransfers);
 
@@ -881,14 +881,14 @@ contract XVSVault is XVSVaultStorage, ECDSA, AccessControlledV5 {
                 pendingRewardTransfers[rewardToken][userAddress] = 0;
                 emit VaultDebtUpdated(rewardToken, userAddress, debtDueToFailedTransfers, 0);
             }
-            IXVSStore(xvsStore_).safeRewardTransfer(rewardToken, userAddress, fullAmount);
+            IUCOREStore(ucoreStore_).safeRewardTransfer(rewardToken, userAddress, fullAmount);
             return;
         }
         // Overflow isn't possible due to the check above
         uint256 newOwedAmount = fullAmount - storeBalance;
         pendingRewardTransfers[rewardToken][userAddress] = newOwedAmount;
         emit VaultDebtUpdated(rewardToken, userAddress, debtDueToFailedTransfers, newOwedAmount);
-        IXVSStore(xvsStore_).safeRewardTransfer(rewardToken, userAddress, storeBalance);
+        IUCOREStore(ucoreStore_).safeRewardTransfer(rewardToken, userAddress, storeBalance);
     }
 
     /**

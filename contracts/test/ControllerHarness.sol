@@ -4,20 +4,20 @@ import "../Controller/Controller.sol";
 import "../Oracle/PriceOracle.sol";
 
 contract ControllerKovan is Controller {
-    function getXVSAddress() public view returns (address) {
+    function getUCOREAddress() public view returns (address) {
         return 0x61460874a7196d6a22D1eE4922473664b3E95270;
     }
 }
 
 contract ControllerRopsten is Controller {
-    function getXVSAddress() public view returns (address) {
+    function getUCOREAddress() public view returns (address) {
         return 0x1Fe16De955718CFAb7A44605458AB023838C2793;
     }
 }
 
 contract ControllerHarness is Controller {
-    address internal xvsAddress;
-    address internal vXVSAddress;
+    address internal ucoreAddress;
+    address internal vUCOREAddress;
     uint public blockNumber;
 
     constructor() public Controller() {}
@@ -36,32 +36,32 @@ contract ControllerHarness is Controller {
         venusAccrued[user] = userAccrued;
     }
 
-    function setXVSAddress(address xvsAddress_) public {
-        xvsAddress = xvsAddress_;
+    function setUCOREAddress(address ucoreAddress_) public {
+        ucoreAddress = ucoreAddress_;
     }
 
-    function getXVSAddress() public view returns (address) {
-        return xvsAddress;
+    function getUCOREAddress() public view returns (address) {
+        return ucoreAddress;
     }
 
-    function setXVSVTokenAddress(address vXVSAddress_) public {
-        vXVSAddress = vXVSAddress_;
+    function setUCOREVTokenAddress(address vUCOREAddress_) public {
+        vUCOREAddress = vUCOREAddress_;
     }
 
-    function getXVSVTokenAddress() public view returns (address) {
-        return vXVSAddress;
+    function getUCOREVTokenAddress() public view returns (address) {
+        return vUCOREAddress;
     }
 
     /**
-     * @notice Set the amount of XVS distributed per block
-     * @param venusRate_ The amount of XVS wei per block to distribute
+     * @notice Set the amount of UCORE distributed per block
+     * @param venusRate_ The amount of UCORE wei per block to distribute
      */
     function harnessSetVenusRate(uint venusRate_) public {
         venusRate = venusRate_;
     }
 
     /**
-     * @notice Recalculate and update XVS speeds for all XVS markets
+     * @notice Recalculate and update UCORE speeds for all UCORE markets
      */
     function harnessRefreshVenusSpeeds() public {
         VToken[] memory allMarkets_ = allMarkets;
@@ -106,12 +106,12 @@ contract ControllerHarness is Controller {
         uint marketBorrowIndexMantissa
     ) public {
         distributeBorrowerVenus(vToken, borrower, Exp({ mantissa: marketBorrowIndexMantissa }));
-        venusAccrued[borrower] = grantXVSInternal(borrower, venusAccrued[borrower], 0, false);
+        venusAccrued[borrower] = grantUCOREInternal(borrower, venusAccrued[borrower], 0, false);
     }
 
     function harnessDistributeAllSupplierVenus(address vToken, address supplier) public {
         distributeSupplierVenus(vToken, supplier);
-        venusAccrued[supplier] = grantXVSInternal(supplier, venusAccrued[supplier], 0, false);
+        venusAccrued[supplier] = grantUCOREInternal(supplier, venusAccrued[supplier], 0, false);
     }
 
     function harnessUpdateVenusBorrowIndex(address vToken, uint marketBorrowIndexMantissa) public {
@@ -132,7 +132,7 @@ contract ControllerHarness is Controller {
 
     function harnessTransferVenus(address user, uint userAccrued, uint threshold) public returns (uint) {
         if (userAccrued > 0 && userAccrued >= threshold) {
-            return grantXVSInternal(user, userAccrued, 0, false);
+            return grantUCOREInternal(user, userAccrued, 0, false);
         }
         return userAccrued;
     }

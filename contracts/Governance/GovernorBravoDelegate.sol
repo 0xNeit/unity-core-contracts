@@ -8,10 +8,10 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
     string public constant name = "Venus Governor Bravo";
 
     /// @notice The minimum setable proposal threshold
-    uint public constant MIN_PROPOSAL_THRESHOLD = 150000e18; // 150,000 Xvs
+    uint public constant MIN_PROPOSAL_THRESHOLD = 150000e18; // 150,000 UCore
 
     /// @notice The maximum setable proposal threshold
-    uint public constant MAX_PROPOSAL_THRESHOLD = 300000e18; //300,000 Xvs
+    uint public constant MAX_PROPOSAL_THRESHOLD = 300000e18; //300,000 UCore
 
     /// @notice The minimum setable voting period
     uint public constant MIN_VOTING_PERIOD = 20 * 60 * 3; // About 3 hours, 3 secs per block
@@ -26,7 +26,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
     uint public constant MAX_VOTING_DELAY = 20 * 60 * 24 * 7; // About 1 week, 3 secs per block
 
     /// @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
-    uint public constant quorumVotes = 600000e18; // 600,000 = 2% of Xvs
+    uint public constant quorumVotes = 600000e18; // 600,000 = 2% of UCore
 
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH =
@@ -37,19 +37,19 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
 
     /**
      * @notice Used to initialize the contract during delegator contructor
-     * @param xvsVault_ The address of the XvsVault
+     * @param ucoreVault_ The address of the UCoreVault
      * @param proposalConfigs_ Governance configs for each governance route
      * @param timelocks Timelock addresses for each governance route
      */
     function initialize(
-        address xvsVault_,
+        address ucoreVault_,
         ProposalConfig[] memory proposalConfigs_,
         TimelockInterface[] memory timelocks,
         address guardian_
     ) public {
         require(address(proposalTimelocks[0]) == address(0), "GovernorBravo::initialize: cannot initialize twice");
         require(msg.sender == admin, "GovernorBravo::initialize: admin only");
-        require(xvsVault_ != address(0), "GovernorBravo::initialize: invalid xvs address");
+        require(ucoreVault_ != address(0), "GovernorBravo::initialize: invalid ucore address");
         require(guardian_ != address(0), "GovernorBravo::initialize: invalid guardian");
         require(
             timelocks.length == uint8(ProposalType.CRITICAL) + 1,
@@ -60,7 +60,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
             "GovernorBravo::initialize:number of proposal configs should match number of governance routes"
         );
 
-        xvsVault = XvsVaultInterface(xvsVault_);
+        ucoreVault = UCoreVaultInterface(ucoreVault_);
         proposalMaxOperations = 10;
         guardian = guardian_;
 
@@ -122,7 +122,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
         // Reject proposals before initiating as Governor
         require(initialProposalId != 0, "GovernorBravo::propose: Governor Bravo not active");
         require(
-            xvsVault.getPriorVotes(msg.sender, sub256(block.number, 1)) >=
+            ucoreVault.getPriorVotes(msg.sender, sub256(block.number, 1)) >=
                 proposalConfigs[uint8(proposalType)].proposalThreshold,
             "GovernorBravo::propose: proposer votes below proposal threshold"
         );
@@ -264,7 +264,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
         require(
             msg.sender == guardian ||
                 msg.sender == proposal.proposer ||
-                xvsVault.getPriorVotes(proposal.proposer, sub256(block.number, 1)) <
+                ucoreVault.getPriorVotes(proposal.proposer, sub256(block.number, 1)) <
                 proposalConfigs[proposal.proposalType].proposalThreshold,
             "GovernorBravo::cancel: proposer above threshold"
         );
@@ -393,7 +393,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
         Proposal storage proposal = proposals[proposalId];
         Receipt storage receipt = proposal.receipts[voter];
         require(receipt.hasVoted == false, "GovernorBravo::castVoteInternal: voter already voted");
-        uint96 votes = xvsVault.getPriorVotes(voter, proposal.startBlock);
+        uint96 votes = ucoreVault.getPriorVotes(voter, proposal.startBlock);
 
         if (support == 0) {
             proposal.againstVotes = add256(proposal.againstVotes, votes);

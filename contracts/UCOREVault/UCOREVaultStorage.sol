@@ -3,7 +3,7 @@ pragma solidity ^0.5.16;
 import "../Utils/SafeMath.sol";
 import "../Utils/IBEP20.sol";
 
-contract XVSVaultAdminStorage {
+contract UCOREVaultAdminStorage {
     /**
      * @notice Administrator for this contract
      */
@@ -15,25 +15,25 @@ contract XVSVaultAdminStorage {
     address public pendingAdmin;
 
     /**
-     * @notice Active brains of XVS Vault
+     * @notice Active brains of UCORE Vault
      */
     address public implementation;
 
     /**
-     * @notice Pending brains of XVS Vault
+     * @notice Pending brains of UCORE Vault
      */
-    address public pendingXVSVaultImplementation;
+    address public pendingUCOREVaultImplementation;
 }
 
-contract XVSVaultStorageV1 is XVSVaultAdminStorage {
+contract UCOREVaultStorageV1 is UCOREVaultAdminStorage {
     /// @notice Guard variable for re-entrancy checks
     bool internal _notEntered;
 
     /// @notice The reward token store
-    address public xvsStore;
+    address public ucoreStore;
 
-    /// @notice The xvs token address
-    address public xvsAddress;
+    /// @notice The ucore token address
+    address public ucoreAddress;
 
     // Reward tokens created per block indentified by reward token address.
     mapping(address => uint256) public rewardTokenAmountsPerBlock;
@@ -100,7 +100,7 @@ contract XVSVaultStorageV1 is XVSVaultAdminStorage {
         keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 }
 
-contract XVSVaultStorage is XVSVaultStorageV1 {
+contract UCOREVaultStorage is UCOREVaultStorageV1 {
     /// @notice A record of each accounts delegate
     mapping(address => address) public delegates;
 

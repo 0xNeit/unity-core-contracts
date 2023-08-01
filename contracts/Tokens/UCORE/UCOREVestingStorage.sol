@@ -3,7 +3,7 @@ pragma solidity ^0.5.16;
 import "../../Utils/SafeMath.sol";
 import "../../Utils/IBEP20.sol";
 
-contract XVSVestingAdminStorage {
+contract UCOREVestingAdminStorage {
     /**
      * @notice Administrator for this contract
      */
@@ -15,17 +15,17 @@ contract XVSVestingAdminStorage {
     address public pendingAdmin;
 
     /**
-     * @notice Active brains of XVSVesting
+     * @notice Active brains of UCOREVesting
      */
     address public implementation;
 
     /**
-     * @notice Pending brains of XVSVesting
+     * @notice Pending brains of UCOREVesting
      */
     address public pendingImplementation;
 }
 
-contract XVSVestingStorage is XVSVestingAdminStorage {
+contract UCOREVestingStorage is UCOREVestingAdminStorage {
     struct VestingRecord {
         address recipient;
         uint256 startTime;
@@ -39,8 +39,8 @@ contract XVSVestingStorage is XVSVestingAdminStorage {
     /// @notice indicator to check if the contract is initialized
     bool public initialized;
 
-    /// @notice The XVS TOKEN!
-    IBEP20 public xvs;
+    /// @notice The UCORE TOKEN!
+    IBEP20 public ucore;
 
     /// @notice URTConversion Contract Address
     address public urtConversionAddress;

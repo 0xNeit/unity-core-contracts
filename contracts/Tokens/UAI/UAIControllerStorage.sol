@@ -40,7 +40,7 @@ contract UAIControllerStorageG1 is UAIUnitrollerAdminStorage {
     /// @notice The Venus UAI state initialized
     bool public isVenusUAIInitialized;
 
-    /// @notice The Venus UAI minter index as of the last time they accrued XVS
+    /// @notice The Venus UAI minter index as of the last time they accrued UCORE
     mapping(address => uint) public venusUAIMinterIndex;
 }
 

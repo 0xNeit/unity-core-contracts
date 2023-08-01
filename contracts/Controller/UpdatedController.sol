@@ -3,7 +3,7 @@ pragma solidity ^0.5.16;
 import "../Oracle/PriceOracle.sol";
 import "../Tokens/VTokens/VToken.sol";
 import "../Utils/ErrorReporter.sol";
-import "../Tokens/XVS/XVS.sol";
+import "../Tokens/UCORE/UCORE.sol";
 import "../Tokens/UAI/UAI.sol";
 import "../Governance/IAccessControlManager.sol";
 import "./ControllerLensInterface.sol";
@@ -58,13 +58,13 @@ contract UpdatedController is
     /// @notice Emitted when Venus UAI Vault rate is changed
     event NewVenusUAIVaultRate(uint oldVenusUAIVaultRate, uint newVenusUAIVaultRate);
 
-    /// @notice Emitted when a new borrow-side XVS speed is calculated for a market
+    /// @notice Emitted when a new borrow-side UCORE speed is calculated for a market
     event VenusBorrowSpeedUpdated(VToken indexed vToken, uint newSpeed);
 
-    /// @notice Emitted when a new supply-side XVS speed is calculated for a market
+    /// @notice Emitted when a new supply-side UCORE speed is calculated for a market
     event VenusSupplySpeedUpdated(VToken indexed vToken, uint newSpeed);
 
-    /// @notice Emitted when XVS is distributed to a supplier
+    /// @notice Emitted when UCORE is distributed to a supplier
     event DistributedSupplierVenus(
         VToken indexed vToken,
         address indexed supplier,
@@ -72,7 +72,7 @@ contract UpdatedController is
         uint venusSupplyIndex
     );
 
-    /// @notice Emitted when XVS is distributed to a borrower
+    /// @notice Emitted when UCORE is distributed to a borrower
     event DistributedBorrowerVenus(
         VToken indexed vToken,
         address indexed borrower,
@@ -80,7 +80,7 @@ contract UpdatedController is
         uint venusBorrowIndex
     );
 
-    /// @notice Emitted when XVS is distributed to UAI Vault
+    /// @notice Emitted when UCORE is distributed to UAI Vault
     event DistributedUAIVaultVenus(uint amount);
 
     /// @notice Emitted when UAIController is changed
@@ -1069,8 +1069,8 @@ contract UpdatedController is
 
         if (venusSupplySpeeds[address(vToken)] != supplySpeed) {
             // Supply speed updated so let's update supply state to ensure that
-            //  1. XVS accrued properly for the old speed, and
-            //  2. XVS accrued at the new speed starts after this block.
+            //  1. UCORE accrued properly for the old speed, and
+            //  2. UCORE accrued at the new speed starts after this block.
 
             updateVenusSupplyIndex(address(vToken));
             // Update speed and emit event
@@ -1080,8 +1080,8 @@ contract UpdatedController is
 
         if (venusBorrowSpeeds[address(vToken)] != borrowSpeed) {
             // Borrow speed updated so let's update borrow state to ensure that
-            //  1. XVS accrued properly for the old speed, and
-            //  2. XVS accrued at the new speed starts after this block.
+            //  1. UCORE accrued properly for the old speed, and
+            //  2. UCORE accrued at the new speed starts after this block.
             Exp memory borrowIndex = Exp({ mantissa: vToken.borrowIndex() });
             updateVenusBorrowIndex(address(vToken), borrowIndex);
 
@@ -1105,7 +1105,7 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Accrue XVS to the market by updating the supply index
+     * @notice Accrue UCORE to the market by updating the supply index
      * @param vToken The market whose supply index to update
      */
     function updateVenusSupplyIndex(address vToken) internal {
@@ -1128,7 +1128,7 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Accrue XVS to the market by updating the borrow index
+     * @notice Accrue UCORE to the market by updating the borrow index
      * @param vToken The market whose borrow index to update
      */
     function updateVenusBorrowIndex(address vToken, Exp memory marketBorrowIndex) internal {
@@ -1151,9 +1151,9 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Calculate XVS accrued by a supplier and possibly transfer it to them
+     * @notice Calculate UCORE accrued by a supplier and possibly transfer it to them
      * @param vToken The market in which the supplier is interacting
-     * @param supplier The address of the supplier to distribute XVS to
+     * @param supplier The address of the supplier to distribute UCORE to
      */
     function distributeSupplierVenus(address vToken, address supplier) internal {
         if (address(uaiVaultAddress) != address(0)) {
@@ -1163,17 +1163,17 @@ contract UpdatedController is
         uint supplyIndex = venusSupplyState[vToken].index;
         uint supplierIndex = venusSupplierIndex[vToken][supplier];
 
-        // Update supplier's index to the current index since we are distributing accrued XVS
+        // Update supplier's index to the current index since we are distributing accrued UCORE
         venusSupplierIndex[vToken][supplier] = supplyIndex;
 
         if (supplierIndex == 0 && supplyIndex >= venusInitialIndex) {
             // Covers the case where users supplied tokens before the market's supply state index was set.
-            // Rewards the user with XVS accrued from the start of when supplier rewards were first
+            // Rewards the user with UCORE accrued from the start of when supplier rewards were first
             // set for the market.
             supplierIndex = venusInitialIndex;
         }
 
-        // Calculate change in the cumulative sum of the XVS per vToken accrued
+        // Calculate change in the cumulative sum of the UCORE per vToken accrued
         Double memory deltaIndex = Double({ mantissa: sub_(supplyIndex, supplierIndex) });
 
         // Multiply of supplierTokens and supplierDelta
@@ -1186,10 +1186,10 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Calculate XVS accrued by a borrower and possibly transfer it to them
+     * @notice Calculate UCORE accrued by a borrower and possibly transfer it to them
      * @dev Borrowers will not begin to accrue until after the first interaction with the protocol.
      * @param vToken The market in which the borrower is interacting
-     * @param borrower The address of the borrower to distribute XVS to
+     * @param borrower The address of the borrower to distribute UCORE to
      */
     function distributeBorrowerVenus(address vToken, address borrower, Exp memory marketBorrowIndex) internal {
         if (address(uaiVaultAddress) != address(0)) {
@@ -1199,17 +1199,17 @@ contract UpdatedController is
         uint borrowIndex = venusBorrowState[vToken].index;
         uint borrowerIndex = venusBorrowerIndex[vToken][borrower];
 
-        // Update borrowers's index to the current index since we are distributing accrued XVS
+        // Update borrowers's index to the current index since we are distributing accrued UCORE
         venusBorrowerIndex[vToken][borrower] = borrowIndex;
 
         if (borrowerIndex == 0 && borrowIndex >= venusInitialIndex) {
             // Covers the case where users borrowed tokens before the market's borrow state index was set.
-            // Rewards the user with XVS accrued from the start of when borrower rewards were first
+            // Rewards the user with UCORE accrued from the start of when borrower rewards were first
             // set for the market.
             borrowerIndex = venusInitialIndex;
         }
 
-        // Calculate change in the cumulative sum of the XVS per borrowed unit accrued
+        // Calculate change in the cumulative sum of the UCORE per borrowed unit accrued
         Double memory deltaIndex = Double({ mantissa: sub_(borrowIndex, borrowerIndex) });
 
         uint borrowerDelta = mul_(div_(VToken(vToken).borrowBalanceStored(borrower), marketBorrowIndex), deltaIndex);
@@ -1220,17 +1220,17 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Claim all the xvs accrued by holder in all markets and UAI
-     * @param holder The address to claim XVS for
+     * @notice Claim all the ucore accrued by holder in all markets and UAI
+     * @param holder The address to claim UCORE for
      */
     function claimVenus(address holder) public {
         return claimVenus(holder, allMarkets);
     }
 
     /**
-     * @notice Claim all the xvs accrued by holder in the specified markets
-     * @param holder The address to claim XVS for
-     * @param vTokens The list of markets to claim XVS in
+     * @notice Claim all the ucore accrued by holder in the specified markets
+     * @param holder The address to claim UCORE for
+     * @param vTokens The list of markets to claim UCORE in
      */
     function claimVenus(address holder, VToken[] memory vTokens) public {
         address[] memory holders = new address[](1);
@@ -1239,23 +1239,23 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Claim all xvs accrued by the holders
-     * @param holders The addresses to claim XVS for
-     * @param vTokens The list of markets to claim XVS in
-     * @param borrowers Whether or not to claim XVS earned by borrowing
-     * @param suppliers Whether or not to claim XVS earned by supplying
+     * @notice Claim all ucore accrued by the holders
+     * @param holders The addresses to claim UCORE for
+     * @param vTokens The list of markets to claim UCORE in
+     * @param borrowers Whether or not to claim UCORE earned by borrowing
+     * @param suppliers Whether or not to claim UCORE earned by supplying
      */
     function claimVenus(address[] memory holders, VToken[] memory vTokens, bool borrowers, bool suppliers) public {
         claimVenus(holders, vTokens, borrowers, suppliers, false);
     }
 
     /**
-     * @notice Claim all xvs accrued by the holders
-     * @param holders The addresses to claim XVS for
-     * @param vTokens The list of markets to claim XVS in
-     * @param borrowers Whether or not to claim XVS earned by borrowing
-     * @param suppliers Whether or not to claim XVS earned by supplying
-     * @param collateral Whether or not to use XVS earned as collateral, only takes effect when the holder has a shortfall
+     * @notice Claim all ucore accrued by the holders
+     * @param holders The addresses to claim UCORE for
+     * @param vTokens The list of markets to claim UCORE in
+     * @param borrowers Whether or not to claim UCORE earned by borrowing
+     * @param suppliers Whether or not to claim UCORE earned by supplying
+     * @param collateral Whether or not to use UCORE earned as collateral, only takes effect when the holder has a shortfall
      */
     function claimVenus(
         address[] memory holders,
@@ -1286,16 +1286,16 @@ contract UpdatedController is
 
         for (j = 0; j < holdersLength; ++j) {
             address holder = holders[j];
-            // If there is a positive shortfall, the XVS reward is accrued,
+            // If there is a positive shortfall, the UCORE reward is accrued,
             // but won't be granted to this holder
             (, , uint shortfall) = getHypotheticalAccountLiquidityInternal(holder, VToken(0), 0, 0);
-            venusAccrued[holder] = grantXVSInternal(holder, venusAccrued[holder], shortfall, collateral);
+            venusAccrued[holder] = grantUCOREInternal(holder, venusAccrued[holder], shortfall, collateral);
         }
     }
 
     /**
-     * @notice Claim all the xvs accrued by holder in all markets, a shorthand for `claimVenus` with collateral set to `true`
-     * @param holder The address to claim XVS for
+     * @notice Claim all the ucore accrued by holder in all markets, a shorthand for `claimVenus` with collateral set to `true`
+     * @param holder The address to claim UCORE for
      */
     function claimVenusAsCollateral(address holder) external {
         address[] memory holders = new address[](1);
@@ -1304,16 +1304,16 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Transfer XVS to the user with user's shortfall considered
-     * @dev Note: If there is not enough XVS, we do not perform the transfer all.
-     * @param user The address of the user to transfer XVS to
-     * @param amount The amount of XVS to (possibly) transfer
+     * @notice Transfer UCORE to the user with user's shortfall considered
+     * @dev Note: If there is not enough UCORE, we do not perform the transfer all.
+     * @param user The address of the user to transfer UCORE to
+     * @param amount The amount of UCORE to (possibly) transfer
      * @param shortfall The shortfall of the user
      * @param collateral Whether or not we will use user's venus reward as collateral to pay off the debt
-     * @return The amount of XVS which was NOT transferred to the user
+     * @return The amount of UCORE which was NOT transferred to the user
      */
-    function grantXVSInternal(address user, uint amount, uint shortfall, bool collateral) internal returns (uint) {
-        // If the user is blacklisted, they can't get XVS rewards
+    function grantUCOREInternal(address user, uint amount, uint shortfall, bool collateral) internal returns (uint) {
+        // If the user is blacklisted, they can't get UCORE rewards
         require(
             user != 0xEF044206Db68E40520BfA82D45419d498b4bc7Bf &&
                 user != 0x7589dD3355DAE848FDbF75044A3495351655cB1A &&
@@ -1322,27 +1322,27 @@ contract UpdatedController is
             "Blacklisted"
         );
 
-        XVS xvs = XVS(getXVSAddress());
+        UCORE ucore = UCORE(getUCOREAddress());
 
-        if (amount == 0 || amount > xvs.balanceOf(address(this))) {
+        if (amount == 0 || amount > ucore.balanceOf(address(this))) {
             return amount;
         }
 
         if (shortfall == 0) {
-            xvs.transfer(user, amount);
+            ucore.transfer(user, amount);
             return 0;
         }
-        // If user's bankrupt and doesn't use pending xvs as collateral, don't grant
-        // anything, otherwise, we will transfer the pending xvs as collateral to
-        // vXVS token and mint vXVS for the user.
+        // If user's bankrupt and doesn't use pending ucore as collateral, don't grant
+        // anything, otherwise, we will transfer the pending ucore as collateral to
+        // vUCORE token and mint vUCORE for the user.
         //
-        // If mintBehalf failed, don't grant any xvs
-        require(collateral, "bankrupt accounts can only collateralize their pending xvs rewards");
+        // If mintBehalf failed, don't grant any ucore
+        require(collateral, "bankrupt accounts can only collateralize their pending ucore rewards");
 
-        xvs.approve(getXVSVTokenAddress(), amount);
+        ucore.approve(getUCOREVTokenAddress(), amount);
         require(
-            VBep20Interface(getXVSVTokenAddress()).mintBehalf(user, amount) == uint(Error.NO_ERROR),
-            "mint behalf error during collateralize xvs"
+            VBep20Interface(getUCOREVTokenAddress()).mintBehalf(user, amount) == uint(Error.NO_ERROR),
+            "mint behalf error during collateralize ucore"
         );
 
         // set venusAccrue[user] to 0
@@ -1352,21 +1352,21 @@ contract UpdatedController is
     /*** Venus Distribution Admin ***/
 
     /**
-     * @notice Transfer XVS to the recipient
-     * @dev Note: If there is not enough XVS, we do not perform the transfer all.
-     * @param recipient The address of the recipient to transfer XVS to
-     * @param amount The amount of XVS to (possibly) transfer
+     * @notice Transfer UCORE to the recipient
+     * @dev Note: If there is not enough UCORE, we do not perform the transfer all.
+     * @param recipient The address of the recipient to transfer UCORE to
+     * @param amount The amount of UCORE to (possibly) transfer
      */
-    function _grantXVS(address recipient, uint amount) external {
+    function _grantUCORE(address recipient, uint amount) external {
         ensureAdminOr(controllerImplementation);
-        uint amountLeft = grantXVSInternal(recipient, amount, 0, false);
-        require(amountLeft == 0, "insufficient xvs for grant");
+        uint amountLeft = grantUCOREInternal(recipient, amount, 0, false);
+        require(amountLeft == 0, "insufficient ucore for grant");
         emit VenusGranted(recipient, amount);
     }
 
     /**
-     * @notice Set the amount of XVS distributed per block to UAI Vault
-     * @param venusUAIVaultRate_ The amount of XVS wei per block to distribute to UAI Vault
+     * @notice Set the amount of UCORE distributed per block to UAI Vault
+     * @param venusUAIVaultRate_ The amount of UCORE wei per block to distribute to UAI Vault
      */
     function _setVenusUAIVaultRate(uint venusUAIVaultRate_) external {
         ensureAdmin();
@@ -1393,10 +1393,10 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Set XVS speed for a single market
-     * @param vTokens The market whose XVS speed to update
-     * @param supplySpeeds New XVS speed for supply
-     * @param borrowSpeeds New XVS speed for borrow
+     * @notice Set UCORE speed for a single market
+     * @param vTokens The market whose UCORE speed to update
+     * @param supplySpeeds New UCORE speed for supply
+     * @param borrowSpeeds New UCORE speed for borrow
      */
     function _setVenusSpeeds(
         VToken[] calldata vTokens,
@@ -1431,18 +1431,18 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Return the address of the XVS token
-     * @return The address of XVS
+     * @notice Return the address of the UCORE token
+     * @return The address of UCORE
      */
-    function getXVSAddress() public view returns (address) {
+    function getUCOREAddress() public view returns (address) {
         return 0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63;
     }
 
     /**
-     * @notice Return the address of the XVS vToken
-     * @return The address of XVS vToken
+     * @notice Return the address of the UCORE vToken
+     * @return The address of UCORE vToken
      */
-    function getXVSVTokenAddress() public view returns (address) {
+    function getUCOREVTokenAddress() public view returns (address) {
         return 0x151B1e2635A717bcDc836ECd6FbB62B674FE3E1D;
     }
 
@@ -1478,17 +1478,17 @@ contract UpdatedController is
     }
 
     /**
-     * @notice Transfer XVS to UAI Vault
+     * @notice Transfer UCORE to UAI Vault
      */
     function releaseToVault() public {
         if (releaseStartBlock == 0 || getBlockNumber() < releaseStartBlock) {
             return;
         }
 
-        XVS xvs = XVS(getXVSAddress());
+        UCORE ucore = UCORE(getUCOREAddress());
 
-        uint256 xvsBalance = xvs.balanceOf(address(this));
-        if (xvsBalance == 0) {
+        uint256 ucoreBalance = ucore.balanceOf(address(this));
+        if (ucoreBalance == 0) {
             return;
         }
 
@@ -1497,10 +1497,10 @@ contract UpdatedController is
         // releaseAmount = venusUAIVaultRate * deltaBlocks
         uint256 _releaseAmount = mul_(venusUAIVaultRate, deltaBlocks);
 
-        if (xvsBalance >= _releaseAmount) {
+        if (ucoreBalance >= _releaseAmount) {
             actualAmount = _releaseAmount;
         } else {
-            actualAmount = xvsBalance;
+            actualAmount = ucoreBalance;
         }
 
         if (actualAmount < minReleaseAmount) {
@@ -1509,7 +1509,7 @@ contract UpdatedController is
 
         releaseStartBlock = getBlockNumber();
 
-        xvs.transfer(uaiVaultAddress, actualAmount);
+        ucore.transfer(uaiVaultAddress, actualAmount);
         emit DistributedUAIVaultVenus(actualAmount);
 
         IUAIVault(uaiVaultAddress).updatePendingRewards();

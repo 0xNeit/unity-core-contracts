@@ -78,7 +78,7 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice Deposit UAI to UAIVault for XVS allocation
+     * @notice Deposit UAI to UAIVault for UCORE allocation
      * @param _amount The amount to deposit to vault
      */
     function deposit(uint256 _amount) external nonReentrant isActive {
@@ -95,7 +95,7 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
             user.amount = user.amount.add(_amount);
         }
 
-        user.rewardDebt = user.amount.mul(accXVSPerShare).div(1e18);
+        user.rewardDebt = user.amount.mul(accUCOREPerShare).div(1e18);
         emit Deposit(msg.sender, _amount);
     }
 
@@ -108,15 +108,15 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice Claim XVS from UAIVault
+     * @notice Claim UCORE from UAIVault
      */
     function claim() external nonReentrant isActive {
         _withdraw(msg.sender, 0);
     }
 
     /**
-     * @notice Claim XVS from UAIVault
-     * @param account The account for which to claim XVS
+     * @notice Claim UCORE from UAIVault
+     * @param account The account for which to claim UCORE
      */
     function claim(address account) external nonReentrant isActive {
         _withdraw(account, 0);
@@ -132,54 +132,54 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
         require(user.amount >= _amount, "withdraw: not good");
 
         updateVault();
-        updateAndPayOutPending(account); // Update balances of account this is not withdrawal but claiming XVS farmed
+        updateAndPayOutPending(account); // Update balances of account this is not withdrawal but claiming UCORE farmed
 
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
             uai.safeTransfer(address(account), _amount);
         }
-        user.rewardDebt = user.amount.mul(accXVSPerShare).div(1e18);
+        user.rewardDebt = user.amount.mul(accUCOREPerShare).div(1e18);
 
         emit Withdraw(account, _amount);
     }
 
     /**
-     * @notice View function to see pending XVS on frontend
-     * @param _user The user to see pending XVS
-     * @return Amount of XVS the user can claim
+     * @notice View function to see pending UCORE on frontend
+     * @param _user The user to see pending UCORE
+     * @return Amount of UCORE the user can claim
      */
-    function pendingXVS(address _user) public view returns (uint256) {
+    function pendingUCORE(address _user) public view returns (uint256) {
         UserInfo storage user = userInfo[_user];
 
-        return user.amount.mul(accXVSPerShare).div(1e18).sub(user.rewardDebt);
+        return user.amount.mul(accUCOREPerShare).div(1e18).sub(user.rewardDebt);
     }
 
     /**
-     * @notice Update and pay out pending XVS to user
+     * @notice Update and pay out pending UCORE to user
      * @param account The user to pay out
      */
     function updateAndPayOutPending(address account) internal {
-        uint256 pending = pendingXVS(account);
+        uint256 pending = pendingUCORE(account);
 
         if (pending > 0) {
-            safeXVSTransfer(account, pending);
+            safeUCORETransfer(account, pending);
         }
     }
 
     /**
-     * @notice Safe XVS transfer function, just in case if rounding error causes pool to not have enough XVS
-     * @param _to The address that XVS to be transfered
-     * @param _amount The amount that XVS to be transfered
+     * @notice Safe UCORE transfer function, just in case if rounding error causes pool to not have enough UCORE
+     * @param _to The address that UCORE to be transfered
+     * @param _amount The amount that UCORE to be transfered
      */
-    function safeXVSTransfer(address _to, uint256 _amount) internal {
-        uint256 xvsBal = xvs.balanceOf(address(this));
+    function safeUCORETransfer(address _to, uint256 _amount) internal {
+        uint256 ucoreBal = ucore.balanceOf(address(this));
 
-        if (_amount > xvsBal) {
-            xvs.transfer(_to, xvsBal);
-            xvsBalance = xvs.balanceOf(address(this));
+        if (_amount > ucoreBal) {
+            ucore.transfer(_to, ucoreBal);
+            ucoreBalance = ucore.balanceOf(address(this));
         } else {
-            xvs.transfer(_to, _amount);
-            xvsBalance = xvs.balanceOf(address(this));
+            ucore.transfer(_to, _amount);
+            ucoreBalance = ucore.balanceOf(address(this));
         }
     }
 
@@ -187,10 +187,10 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
      * @notice Function that updates pending rewards
      */
     function updatePendingRewards() public isActive {
-        uint256 newRewards = xvs.balanceOf(address(this)).sub(xvsBalance);
+        uint256 newRewards = ucore.balanceOf(address(this)).sub(ucoreBalance);
 
         if (newRewards > 0) {
-            xvsBalance = xvs.balanceOf(address(this)); // If there is no change the balance didn't change
+            ucoreBalance = ucore.balanceOf(address(this)); // If there is no change the balance didn't change
             pendingRewards = pendingRewards.add(newRewards);
         }
     }
@@ -207,7 +207,7 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
             return;
         }
 
-        accXVSPerShare = accXVSPerShare.add(pendingRewards.mul(1e18).div(uaiBalance));
+        accUCOREPerShare = accUCOREPerShare.add(pendingRewards.mul(1e18).div(uaiBalance));
         pendingRewards = 0;
     }
 
@@ -218,10 +218,10 @@ contract UAIVault is UAIVaultStorage, AccessControlledV5 {
         require(uaiVaultProxy._acceptImplementation() == 0, "change not authorized");
     }
 
-    function setVenusInfo(address _xvs, address _uai) external onlyAdmin {
-        require(_xvs != address(0) && _uai != address(0), "addresses must not be zero");
-        require(address(xvs) == address(0) && address(uai) == address(0), "addresses already set");
-        xvs = IBEP20(_xvs);
+    function setVenusInfo(address _ucore, address _uai) external onlyAdmin {
+        require(_ucore != address(0) && _uai != address(0), "addresses must not be zero");
+        require(address(ucore) == address(0) && address(uai) == address(0), "addresses already set");
+        ucore = IBEP20(_ucore);
         uai = IBEP20(_uai);
 
         _notEntered = true;

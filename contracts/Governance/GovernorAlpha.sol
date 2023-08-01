@@ -8,12 +8,12 @@ contract GovernorAlpha {
     /// @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
     function quorumVotes() public pure returns (uint) {
         return 600000e18;
-    } // 600,000 = 2% of XVS
+    } // 600,000 = 2% of UCORE
 
     /// @notice The number of votes required in order for a voter to become a proposer
     function proposalThreshold() public pure returns (uint) {
         return 300000e18;
-    } // 300,000 = 1% of XVS
+    } // 300,000 = 1% of UCORE
 
     /// @notice The maximum number of actions that can be included in a proposal
     function proposalMaxOperations() public pure returns (uint) {
@@ -34,7 +34,7 @@ contract GovernorAlpha {
     TimelockInterface public timelock;
 
     /// @notice The address of the Venus governance token
-    XVSInterface public xvs;
+    UCOREInterface public ucore;
 
     /// @notice The address of the Governor Guardian
     address public guardian;
@@ -133,9 +133,9 @@ contract GovernorAlpha {
     /// @notice An event emitted when a proposal has been executed in the Timelock
     event ProposalExecuted(uint id);
 
-    constructor(address timelock_, address xvs_, address guardian_) public {
+    constructor(address timelock_, address ucore_, address guardian_) public {
         timelock = TimelockInterface(timelock_);
-        xvs = XVSInterface(xvs_);
+        ucore = UCOREInterface(ucore_);
         guardian = guardian_;
     }
 
@@ -147,7 +147,7 @@ contract GovernorAlpha {
         string memory description
     ) public returns (uint) {
         require(
-            xvs.getPriorVotes(msg.sender, sub256(block.number, 1)) > proposalThreshold(),
+            ucore.getPriorVotes(msg.sender, sub256(block.number, 1)) > proposalThreshold(),
             "GovernorAlpha::propose: proposer votes below proposal threshold"
         );
         require(
@@ -257,7 +257,7 @@ contract GovernorAlpha {
         Proposal storage proposal = proposals[proposalId];
         require(
             msg.sender == guardian ||
-                xvs.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold(),
+                ucore.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold(),
             "GovernorAlpha::cancel: proposer above threshold"
         );
 
@@ -332,7 +332,7 @@ contract GovernorAlpha {
         Proposal storage proposal = proposals[proposalId];
         Receipt storage receipt = proposal.receipts[voter];
         require(receipt.hasVoted == false, "GovernorAlpha::_castVote: voter already voted");
-        uint96 votes = xvs.getPriorVotes(voter, proposal.startBlock);
+        uint96 votes = ucore.getPriorVotes(voter, proposal.startBlock);
 
         if (support) {
             proposal.forVotes = add256(proposal.forVotes, votes);
@@ -421,6 +421,6 @@ interface TimelockInterface {
     ) external payable returns (bytes memory);
 }
 
-interface XVSInterface {
+interface UCOREInterface {
     function getPriorVotes(address account, uint blockNumber) external view returns (uint96);
 }

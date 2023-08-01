@@ -2,34 +2,34 @@ pragma solidity ^0.5.16;
 
 import "../../Utils/IBEP20.sol";
 import "../../Utils/SafeBEP20.sol";
-import "./XVSVestingStorage.sol";
-import "./XVSVestingProxy.sol";
+import "./UCOREVestingStorage.sol";
+import "./UCOREVestingProxy.sol";
 
 /**
- * @title Venus's XVSVesting Contract
+ * @title Venus's UCOREVesting Contract
  * @author Venus
  */
-contract XVSVesting is XVSVestingStorage {
+contract UCOREVesting is UCOREVestingStorage {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
 
     /// @notice total vesting period for 1 year in seconds
     uint256 public constant TOTAL_VESTING_TIME = 365 * 24 * 60 * 60;
 
-    /// @notice decimal precision for XVS
-    uint256 public constant xvsDecimalsMultiplier = 1e18;
+    /// @notice decimal precision for UCORE
+    uint256 public constant ucoreDecimalsMultiplier = 1e18;
 
-    /// @notice Emitted when XVSVested is claimed by recipient
+    /// @notice Emitted when UCOREVested is claimed by recipient
     event VestedTokensClaimed(address recipient, uint256 amountClaimed);
 
     /// @notice Emitted when urtConversionAddress is set
     event URTConversionSet(address urtConversionAddress);
 
-    /// @notice Emitted when XVS is deposited for vesting
-    event XVSVested(address indexed recipient, uint256 startTime, uint256 amount, uint256 withdrawnAmount);
+    /// @notice Emitted when UCORE is deposited for vesting
+    event UCOREVested(address indexed recipient, uint256 startTime, uint256 amount, uint256 withdrawnAmount);
 
-    /// @notice Emitted when XVS is withdrawn by recipient
-    event XVSWithdrawn(address recipient, uint256 amount);
+    /// @notice Emitted when UCORE is withdrawn by recipient
+    event UCOREWithdrawn(address recipient, uint256 amount);
 
     modifier nonZeroAddress(address _address) {
         require(_address != address(0), "Address cannot be Zero");
@@ -39,21 +39,21 @@ contract XVSVesting is XVSVestingStorage {
     constructor() public {}
 
     /**
-     * @notice initialize XVSVestingStorage
-     * @param _xvsAddress The XVSToken address
+     * @notice initialize UCOREVestingStorage
+     * @param _ucoreAddress The UCOREToken address
      */
-    function initialize(address _xvsAddress) public {
-        require(msg.sender == admin, "only admin may initialize the XVSVesting");
-        require(initialized == false, "XVSVesting is already initialized");
-        require(_xvsAddress != address(0), "_xvsAddress cannot be Zero");
-        xvs = IBEP20(_xvsAddress);
+    function initialize(address _ucoreAddress) public {
+        require(msg.sender == admin, "only admin may initialize the UCOREVesting");
+        require(initialized == false, "UCOREVesting is already initialized");
+        require(_ucoreAddress != address(0), "_ucoreAddress cannot be Zero");
+        ucore = IBEP20(_ucoreAddress);
 
         _notEntered = true;
         initialized = true;
     }
 
     modifier isInitialized() {
-        require(initialized == true, "XVSVesting is not initialized");
+        require(initialized == true, "UCOREVesting is not initialized");
         _;
     }
 
@@ -85,9 +85,9 @@ contract XVSVesting is XVSVestingStorage {
     }
 
     /**
-     * @notice Deposit XVS for Vesting
+     * @notice Deposit UCORE for Vesting
      * @param recipient The vesting recipient
-     * @param depositAmount XVS amount for deposit
+     * @param depositAmount UCORE amount for deposit
      */
     function deposit(
         address recipient,
@@ -106,11 +106,11 @@ contract XVSVesting is XVSVestingStorage {
 
         vestingsOfRecipient.push(vesting);
 
-        emit XVSVested(recipient, vesting.startTime, vesting.amount, vesting.withdrawnAmount);
+        emit UCOREVested(recipient, vesting.startTime, vesting.amount, vesting.withdrawnAmount);
     }
 
     /**
-     * @notice Withdraw Vested XVS of recipient
+     * @notice Withdraw Vested UCORE of recipient
      */
     function withdraw() external isInitialized vestingExistCheck(msg.sender) {
         address recipient = msg.sender;
@@ -132,15 +132,15 @@ contract XVSVesting is XVSVestingStorage {
         }
 
         if (totalWithdrawableAmount > 0) {
-            uint256 xvsBalance = xvs.balanceOf(address(this));
-            require(xvsBalance >= totalWithdrawableAmount, "Insufficient XVS for withdrawal");
-            emit XVSWithdrawn(recipient, totalWithdrawableAmount);
-            xvs.safeTransfer(recipient, totalWithdrawableAmount);
+            uint256 ucoreBalance = ucore.balanceOf(address(this));
+            require(ucoreBalance >= totalWithdrawableAmount, "Insufficient UCORE for withdrawal");
+            emit UCOREWithdrawn(recipient, totalWithdrawableAmount);
+            ucore.safeTransfer(recipient, totalWithdrawableAmount);
         }
     }
 
     /**
-     * @notice get Withdrawable XVS Amount
+     * @notice get Withdrawable UCORE Amount
      * @param recipient The vesting recipient
      * @dev returns A tuple with totalWithdrawableAmount , totalVestedAmount and totalWithdrawnAmount
      */
@@ -173,10 +173,10 @@ contract XVSVesting is XVSVestingStorage {
     }
 
     /**
-     * @notice get Withdrawable XVS Amount
+     * @notice get Withdrawable UCORE Amount
      * @param amount Amount deposited for vesting
      * @param vestingStartTime time in epochSeconds at the time of vestingDeposit
-     * @param withdrawnAmount XVSAmount withdrawn from VestedAmount
+     * @param withdrawnAmount UCOREAmount withdrawn from VestedAmount
      * @dev returns A tuple with vestedAmount and withdrawableAmount
      */
     function calculateWithdrawableAmount(
@@ -194,7 +194,7 @@ contract XVSVesting is XVSVestingStorage {
      * @param vestingAmount Amount deposited for vesting
      * @param vestingStartTime time in epochSeconds at the time of vestingDeposit
      * @param currentTime currentTime in epochSeconds
-     * @return Total XVS amount vested
+     * @return Total UCORE amount vested
      */
     function calculateVestedAmount(
         uint256 vestingAmount,
@@ -219,8 +219,8 @@ contract XVSVesting is XVSVestingStorage {
     }
 
     /*** Admin Functions ***/
-    function _become(XVSVestingProxy xvsVestingProxy) public {
-        require(msg.sender == xvsVestingProxy.admin(), "only proxy admin can change brains");
-        xvsVestingProxy._acceptImplementation();
+    function _become(UCOREVestingProxy ucoreVestingProxy) public {
+        require(msg.sender == ucoreVestingProxy.admin(), "only proxy admin can change brains");
+        ucoreVestingProxy._acceptImplementation();
     }
 }

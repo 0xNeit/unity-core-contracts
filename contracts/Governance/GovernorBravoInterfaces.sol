@@ -95,7 +95,7 @@ contract GovernorBravoDelegateStorageV1 is GovernorBravoDelegatorStorage {
     TimelockInterface public timelock;
 
     /// @notice The address of the Venus governance token
-    XvsVaultInterface public xvsVault;
+    UCoreVaultInterface public ucoreVault;
 
     /// @notice The official record of all proposals ever proposed
     mapping(uint => Proposal) public proposals;
@@ -224,7 +224,7 @@ interface TimelockInterface {
     ) external payable returns (bytes memory);
 }
 
-interface XvsVaultInterface {
+interface UCoreVaultInterface {
     function getPriorVotes(address account, uint blockNumber) external view returns (uint96);
 }
 

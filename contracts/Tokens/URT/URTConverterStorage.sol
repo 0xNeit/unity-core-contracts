@@ -2,7 +2,7 @@ pragma solidity ^0.5.16;
 
 import "../../Utils/SafeMath.sol";
 import "../../Utils/IBEP20.sol";
-import "../XVS/IXVSVesting.sol";
+import "../UCORE/IUCOREVesting.sol";
 
 contract URTConverterAdminStorage {
     /**
@@ -36,16 +36,16 @@ contract URTConverterStorage is URTConverterAdminStorage {
     /// @notice The URT TOKEN!
     IBEP20 public urt;
 
-    /// @notice The XVS TOKEN!
-    IBEP20 public xvs;
+    /// @notice The UCORE TOKEN!
+    IBEP20 public ucore;
 
-    /// @notice XVSVesting Contract reference
-    IXVSVesting public xvsVesting;
+    /// @notice UCOREVesting Contract reference
+    IUCOREVesting public ucoreVesting;
 
-    /// @notice Conversion ratio from URT to XVS with decimal 18
+    /// @notice Conversion ratio from URT to UCORE with decimal 18
     uint256 public conversionRatio;
 
-    /// @notice total URT converted to XVS
+    /// @notice total URT converted to UCORE
     uint256 public totalUrtConverted;
 
     /// @notice Conversion Start time in EpochSeconds

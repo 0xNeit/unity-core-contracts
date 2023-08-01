@@ -1,16 +1,16 @@
 pragma solidity ^0.5.16;
 
-import "./XVSVaultStorage.sol";
-import "./XVSVaultErrorReporter.sol";
+import "./UCOREVaultStorage.sol";
+import "./UCOREVaultErrorReporter.sol";
 
-contract XVSVaultProxy is XVSVaultAdminStorage, XVSVaultErrorReporter {
+contract UCOREVaultProxy is UCOREVaultAdminStorage, UCOREVaultErrorReporter {
     /**
-     * @notice Emitted when pendingXVSVaultImplementation is changed
+     * @notice Emitted when pendingUCOREVaultImplementation is changed
      */
     event NewPendingImplementation(address oldPendingImplementation, address newPendingImplementation);
 
     /**
-     * @notice Emitted when pendingXVSVaultImplementation is accepted, which means XVS Vault implementation is updated
+     * @notice Emitted when pendingUCOREVaultImplementation is accepted, which means UCORE Vault implementation is updated
      */
     event NewImplementation(address oldImplementation, address newImplementation);
 
@@ -35,36 +35,36 @@ contract XVSVaultProxy is XVSVaultAdminStorage, XVSVaultErrorReporter {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_PENDING_IMPLEMENTATION_OWNER_CHECK);
         }
 
-        address oldPendingImplementation = pendingXVSVaultImplementation;
+        address oldPendingImplementation = pendingUCOREVaultImplementation;
 
-        pendingXVSVaultImplementation = newPendingImplementation;
+        pendingUCOREVaultImplementation = newPendingImplementation;
 
-        emit NewPendingImplementation(oldPendingImplementation, pendingXVSVaultImplementation);
+        emit NewPendingImplementation(oldPendingImplementation, pendingUCOREVaultImplementation);
 
         return uint(Error.NO_ERROR);
     }
 
     /**
-     * @notice Accepts new implementation of XVS Vault. msg.sender must be pendingImplementation
+     * @notice Accepts new implementation of UCORE Vault. msg.sender must be pendingImplementation
      * @dev Admin function for new implementation to accept it's role as implementation
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function _acceptImplementation() public returns (uint) {
         // Check caller is pendingImplementation
-        if (msg.sender != pendingXVSVaultImplementation) {
+        if (msg.sender != pendingUCOREVaultImplementation) {
             return fail(Error.UNAUTHORIZED, FailureInfo.ACCEPT_PENDING_IMPLEMENTATION_ADDRESS_CHECK);
         }
 
         // Save current values for inclusion in log
         address oldImplementation = implementation;
-        address oldPendingImplementation = pendingXVSVaultImplementation;
+        address oldPendingImplementation = pendingUCOREVaultImplementation;
 
-        implementation = pendingXVSVaultImplementation;
+        implementation = pendingUCOREVaultImplementation;
 
-        pendingXVSVaultImplementation = address(0);
+        pendingUCOREVaultImplementation = address(0);
 
         emit NewImplementation(oldImplementation, implementation);
-        emit NewPendingImplementation(oldPendingImplementation, pendingXVSVaultImplementation);
+        emit NewPendingImplementation(oldPendingImplementation, pendingUCOREVaultImplementation);
 
         return uint(Error.NO_ERROR);
     }

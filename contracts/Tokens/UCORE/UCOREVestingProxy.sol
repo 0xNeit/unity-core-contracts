@@ -1,15 +1,15 @@
 pragma solidity ^0.5.16;
 
-import "./XVSVestingStorage.sol";
+import "./UCOREVestingStorage.sol";
 
-contract XVSVestingProxy is XVSVestingAdminStorage {
+contract UCOREVestingProxy is UCOREVestingAdminStorage {
     /**
      * @notice Emitted when pendingImplementation is changed
      */
     event NewPendingImplementation(address oldPendingImplementation, address newPendingImplementation);
 
     /**
-     * @notice Emitted when pendingImplementation is accepted, which means XVSVesting implementation is updated
+     * @notice Emitted when pendingImplementation is accepted, which means UCOREVesting implementation is updated
      */
     event NewImplementation(address oldImplementation, address newImplementation);
 
@@ -25,8 +25,8 @@ contract XVSVestingProxy is XVSVestingAdminStorage {
 
     constructor(
         address implementation_,
-        address _xvsAddress
-    ) public nonZeroAddress(implementation_) nonZeroAddress(_xvsAddress) {
+        address _ucoreAddress
+    ) public nonZeroAddress(implementation_) nonZeroAddress(_ucoreAddress) {
         // Creator of the contract is admin during initialization
         admin = msg.sender;
 
@@ -34,7 +34,7 @@ contract XVSVestingProxy is XVSVestingAdminStorage {
         _setImplementation(implementation_);
 
         // First delegate gets to initialize the delegator (i.e. storage contract)
-        delegateTo(implementation_, abi.encodeWithSignature("initialize(address)", _xvsAddress));
+        delegateTo(implementation_, abi.encodeWithSignature("initialize(address)", _ucoreAddress));
     }
 
     modifier nonZeroAddress(address _address) {
@@ -47,8 +47,8 @@ contract XVSVestingProxy is XVSVestingAdminStorage {
      * @param implementation_ The address of the new implementation for delegation
      */
     function _setImplementation(address implementation_) public {
-        require(msg.sender == admin, "XVSVestingProxy::_setImplementation: admin only");
-        require(implementation_ != address(0), "XVSVestingProxy::_setImplementation: invalid implementation address");
+        require(msg.sender == admin, "UCOREVestingProxy::_setImplementation: admin only");
+        require(implementation_ != address(0), "UCOREVestingProxy::_setImplementation: invalid implementation address");
 
         address oldImplementation = implementation;
         implementation = implementation_;

@@ -105,7 +105,7 @@ contract ControllerInterfaceG3 is ControllerInterfaceG2 {
 }
 
 contract ControllerInterfaceG4 is ControllerInterfaceG3 {
-    function getXVSAddress() public view returns (address);
+    function getUCOREAddress() public view returns (address);
 }
 
 contract ControllerInterface is ControllerInterfaceG4 {

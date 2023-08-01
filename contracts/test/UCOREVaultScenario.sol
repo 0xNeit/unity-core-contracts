@@ -1,9 +1,9 @@
 pragma solidity ^0.5.16;
 pragma experimental ABIEncoderV2;
 
-import "../XVSVault/XVSVault.sol";
+import "../UCOREVault/UCOREVault.sol";
 
-contract XVSVaultScenario is XVSVault {
+contract UCOREVaultScenario is UCOREVault {
     using SafeMath for uint256;
 
     function pushOldWithdrawalRequest(
@@ -35,7 +35,7 @@ contract XVSVaultScenario is XVSVault {
         pushOldWithdrawalRequest(user, requests, _amount, lockedUntil);
 
         // Update Delegate Amount
-        if (_rewardToken == address(xvsAddress)) {
+        if (_rewardToken == address(ucoreAddress)) {
             _moveDelegates(delegates[msg.sender], address(0), uint96(_amount));
         }
 

@@ -2,7 +2,7 @@ pragma solidity 0.5.16;
 import "../Utils/SafeBEP20.sol";
 import "../Utils/IBEP20.sol";
 
-contract XVSStore {
+contract UCOREStore {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
 

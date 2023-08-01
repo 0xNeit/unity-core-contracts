@@ -26,11 +26,11 @@ contract URTConverterProxy is URTConverterAdminStorage {
     constructor(
         address implementation_,
         address _urtAddress,
-        address _xvsAddress,
+        address _ucoreAddress,
         uint256 _conversionRatio,
         uint256 _conversionStartTime,
         uint256 _conversionPeriod
-    ) public nonZeroAddress(implementation_) nonZeroAddress(_urtAddress) nonZeroAddress(_xvsAddress) {
+    ) public nonZeroAddress(implementation_) nonZeroAddress(_urtAddress) nonZeroAddress(_ucoreAddress) {
         // Creator of the contract is admin during initialization
         admin = msg.sender;
 
@@ -43,7 +43,7 @@ contract URTConverterProxy is URTConverterAdminStorage {
             abi.encodeWithSignature(
                 "initialize(address,address,uint256,uint256,uint256)",
                 _urtAddress,
-                _xvsAddress,
+                _ucoreAddress,
                 _conversionRatio,
                 _conversionStartTime,
                 _conversionPeriod

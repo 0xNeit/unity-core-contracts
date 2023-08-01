@@ -5,7 +5,7 @@ import "./ControllerScenario.sol";
 
 contract UAIControllerScenario is UAIController {
     uint internal blockNumber;
-    address public xvsAddress;
+    address public ucoreAddress;
     address public uaiAddress;
 
     constructor() public UAIController() {}

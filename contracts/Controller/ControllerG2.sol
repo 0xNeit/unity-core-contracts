@@ -4,7 +4,7 @@ import "../Oracle/PriceOracle.sol";
 import "../Tokens/VTokens/VToken.sol";
 import "../Utils/ErrorReporter.sol";
 import "../Utils/Exponential.sol";
-import "../Tokens/XVS/XVS.sol";
+import "../Tokens/UCORE/UCORE.sol";
 import "../Tokens/UAI/UAI.sol";
 import "./ControllerInterface.sol";
 import "./ControllerStorage.sol";
@@ -57,7 +57,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     /// @notice Emitted when a new Venus speed is calculated for a market
     event VenusSpeedUpdated(VToken indexed vToken, uint newSpeed);
 
-    /// @notice Emitted when XVS is distributed to a supplier
+    /// @notice Emitted when UCORE is distributed to a supplier
     event DistributedSupplierVenus(
         VToken indexed vToken,
         address indexed supplier,
@@ -65,7 +65,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
         uint venusSupplyIndex
     );
 
-    /// @notice Emitted when XVS is distributed to a borrower
+    /// @notice Emitted when UCORE is distributed to a borrower
     event DistributedBorrowerVenus(
         VToken indexed vToken,
         address indexed borrower,
@@ -73,7 +73,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
         uint venusBorrowIndex
     );
 
-    /// @notice Emitted when XVS is distributed to a UAI minter
+    /// @notice Emitted when UCORE is distributed to a UAI minter
     event DistributedUAIMinterVenus(address indexed uaiMinter, uint venusDelta, uint venusUAIMintIndex);
 
     /// @notice Emitted when UAIController is changed
@@ -85,7 +85,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     /// @notice Emitted when protocol state is changed by admin
     event ActionProtocolPaused(bool state);
 
-    /// @notice The threshold above which the flywheel transfers XVS, in wei
+    /// @notice The threshold above which the flywheel transfers UCORE, in wei
     uint public constant venusClaimThreshold = 0.001e18;
 
     /// @notice The initial Venus index for a market
@@ -1251,7 +1251,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Accrue XVS to the market by updating the supply index
+     * @notice Accrue UCORE to the market by updating the supply index
      * @param vToken The market whose supply index to update
      */
     function updateVenusSupplyIndex(address vToken) internal {
@@ -1274,7 +1274,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Accrue XVS to the market by updating the borrow index
+     * @notice Accrue UCORE to the market by updating the borrow index
      * @param vToken The market whose borrow index to update
      */
     function updateVenusBorrowIndex(address vToken, Exp memory marketBorrowIndex) internal {
@@ -1297,7 +1297,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Accrue XVS to by updating the UAI minter index
+     * @notice Accrue UCORE to by updating the UAI minter index
      */
     function updateVenusUAIMintIndex() internal {
         if (address(uaiController) != address(0)) {
@@ -1306,9 +1306,9 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Calculate XVS accrued by a supplier and possibly transfer it to them
+     * @notice Calculate UCORE accrued by a supplier and possibly transfer it to them
      * @param vToken The market in which the supplier is interacting
-     * @param supplier The address of the supplier to distribute XVS to
+     * @param supplier The address of the supplier to distribute UCORE to
      */
     function distributeSupplierVenus(address vToken, address supplier, bool distributeAll) internal {
         VenusMarketState storage supplyState = venusSupplyState[vToken];
@@ -1324,15 +1324,15 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
         uint supplierTokens = VToken(vToken).balanceOf(supplier);
         uint supplierDelta = mul_(supplierTokens, deltaIndex);
         uint supplierAccrued = add_(venusAccrued[supplier], supplierDelta);
-        venusAccrued[supplier] = transferXVS(supplier, supplierAccrued, distributeAll ? 0 : venusClaimThreshold);
+        venusAccrued[supplier] = transferUCORE(supplier, supplierAccrued, distributeAll ? 0 : venusClaimThreshold);
         emit DistributedSupplierVenus(VToken(vToken), supplier, supplierDelta, supplyIndex.mantissa);
     }
 
     /**
-     * @notice Calculate XVS accrued by a borrower and possibly transfer it to them
+     * @notice Calculate UCORE accrued by a borrower and possibly transfer it to them
      * @dev Borrowers will not begin to accrue until after the first interaction with the protocol.
      * @param vToken The market in which the borrower is interacting
-     * @param borrower The address of the borrower to distribute XVS to
+     * @param borrower The address of the borrower to distribute UCORE to
      */
     function distributeBorrowerVenus(
         address vToken,
@@ -1350,15 +1350,15 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
             uint borrowerAmount = div_(VToken(vToken).borrowBalanceStored(borrower), marketBorrowIndex);
             uint borrowerDelta = mul_(borrowerAmount, deltaIndex);
             uint borrowerAccrued = add_(venusAccrued[borrower], borrowerDelta);
-            venusAccrued[borrower] = transferXVS(borrower, borrowerAccrued, distributeAll ? 0 : venusClaimThreshold);
+            venusAccrued[borrower] = transferUCORE(borrower, borrowerAccrued, distributeAll ? 0 : venusClaimThreshold);
             emit DistributedBorrowerVenus(VToken(vToken), borrower, borrowerDelta, borrowIndex.mantissa);
         }
     }
 
     /**
-     * @notice Calculate XVS accrued by a UAI minter and possibly transfer it to them
+     * @notice Calculate UCORE accrued by a UAI minter and possibly transfer it to them
      * @dev UAI minters will not begin to accrue until after the first interaction with the protocol.
-     * @param uaiMinter The address of the UAI minter to distribute XVS to
+     * @param uaiMinter The address of the UAI minter to distribute UCORE to
      */
     function distributeUAIMinterVenus(address uaiMinter, bool distributeAll) internal {
         if (address(uaiController) != address(0)) {
@@ -1370,7 +1370,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
                 uaiMinter
             );
             if (err == uint(Error.NO_ERROR)) {
-                venusAccrued[uaiMinter] = transferXVS(
+                venusAccrued[uaiMinter] = transferUCORE(
                     uaiMinter,
                     uaiMinterAccrued,
                     distributeAll ? 0 : venusClaimThreshold
@@ -1381,18 +1381,18 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Transfer XVS to the user, if they are above the threshold
-     * @dev Note: If there is not enough XVS, we do not perform the transfer all.
-     * @param user The address of the user to transfer XVS to
-     * @param userAccrued The amount of XVS to (possibly) transfer
-     * @return The amount of XVS which was NOT transferred to the user
+     * @notice Transfer UCORE to the user, if they are above the threshold
+     * @dev Note: If there is not enough UCORE, we do not perform the transfer all.
+     * @param user The address of the user to transfer UCORE to
+     * @param userAccrued The amount of UCORE to (possibly) transfer
+     * @return The amount of UCORE which was NOT transferred to the user
      */
-    function transferXVS(address user, uint userAccrued, uint threshold) internal returns (uint) {
+    function transferUCORE(address user, uint userAccrued, uint threshold) internal returns (uint) {
         if (userAccrued >= threshold && userAccrued > 0) {
-            XVS xvs = XVS(getXVSAddress());
-            uint xvsRemaining = xvs.balanceOf(address(this));
-            if (userAccrued <= xvsRemaining) {
-                xvs.transfer(user, userAccrued);
+            UCORE ucore = UCORE(getUCOREAddress());
+            uint ucoreRemaining = ucore.balanceOf(address(this));
+            if (userAccrued <= ucoreRemaining) {
+                ucore.transfer(user, userAccrued);
                 return 0;
             }
         }
@@ -1400,17 +1400,17 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Claim all the xvs accrued by holder in all markets and UAI
-     * @param holder The address to claim XVS for
+     * @notice Claim all the ucore accrued by holder in all markets and UAI
+     * @param holder The address to claim UCORE for
      */
     function claimVenus(address holder) public {
         return claimVenus(holder, allMarkets);
     }
 
     /**
-     * @notice Claim all the xvs accrued by holder in the specified markets
-     * @param holder The address to claim XVS for
-     * @param vTokens The list of markets to claim XVS in
+     * @notice Claim all the ucore accrued by holder in the specified markets
+     * @param holder The address to claim UCORE for
+     * @param vTokens The list of markets to claim UCORE in
      */
     function claimVenus(address holder, VToken[] memory vTokens) public {
         address[] memory holders = new address[](1);
@@ -1419,11 +1419,11 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Claim all xvs accrued by the holders
-     * @param holders The addresses to claim XVS for
-     * @param vTokens The list of markets to claim XVS in
-     * @param borrowers Whether or not to claim XVS earned by borrowing
-     * @param suppliers Whether or not to claim XVS earned by supplying
+     * @notice Claim all ucore accrued by the holders
+     * @param holders The addresses to claim UCORE for
+     * @param vTokens The list of markets to claim UCORE in
+     * @param borrowers Whether or not to claim UCORE earned by borrowing
+     * @param suppliers Whether or not to claim UCORE earned by supplying
      */
     function claimVenus(address[] memory holders, VToken[] memory vTokens, bool borrowers, bool suppliers) public {
         uint j;
@@ -1453,8 +1453,8 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     /*** Venus Distribution Admin ***/
 
     /**
-     * @notice Set the amount of XVS distributed per block
-     * @param venusRate_ The amount of XVS wei per block to distribute
+     * @notice Set the amount of UCORE distributed per block
+     * @param venusRate_ The amount of UCORE wei per block to distribute
      */
     function _setVenusRate(uint venusRate_) public onlyAdmin {
         uint oldRate = venusRate;
@@ -1465,7 +1465,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Add markets to venusMarkets, allowing them to earn XVS in the flywheel
+     * @notice Add markets to venusMarkets, allowing them to earn UCORE in the flywheel
      * @param vTokens The addresses of the markets to add
      */
     function _addVenusMarkets(address[] calldata vTokens) external onlyAdmin {
@@ -1507,7 +1507,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Remove a market from venusMarkets, preventing it from earning XVS in the flywheel
+     * @notice Remove a market from venusMarkets, preventing it from earning UCORE in the flywheel
      * @param vToken The address of the market to drop
      */
     function _dropVenusMarket(address vToken) public onlyAdmin {
@@ -1534,10 +1534,10 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Return the address of the XVS token
-     * @return The address of XVS
+     * @notice Return the address of the UCORE token
+     * @return The address of UCORE
      */
-    function getXVSAddress() public view returns (address) {
+    function getUCOREAddress() public view returns (address) {
         return 0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63;
     }
 

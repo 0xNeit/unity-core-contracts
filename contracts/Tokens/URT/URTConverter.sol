@@ -2,7 +2,7 @@ pragma solidity ^0.5.16;
 
 import "../../Utils/IBEP20.sol";
 import "../../Utils/SafeBEP20.sol";
-import "../XVS/IXVSVesting.sol";
+import "../UCORE/IUCOREVesting.sol";
 import "./URTConverterStorage.sol";
 import "./URTConverterProxy.sol";
 
@@ -19,8 +19,8 @@ contract URTConverter is URTConverterStorage {
     /// @notice decimal precision for URT
     uint256 public constant urtDecimalsMultiplier = 1e18;
 
-    /// @notice decimal precision for XVS
-    uint256 public constant xvsDecimalsMultiplier = 1e18;
+    /// @notice decimal precision for UCORE
+    uint256 public constant ucoreDecimalsMultiplier = 1e18;
 
     /// @notice Emitted when an admin set conversion info
     event ConversionInfoSet(
@@ -35,21 +35,21 @@ contract URTConverter is URTConverterStorage {
         address reedeemer,
         address urtAddress,
         uint256 urtAmount,
-        address xvsAddress,
-        uint256 xvsAmount
+        address ucoreAddress,
+        uint256 ucoreAmount
     );
 
     /// @notice Emitted when an admin withdraw converted token
     event TokenWithdraw(address token, address to, uint256 amount);
 
-    /// @notice Emitted when XVSVestingAddress is set
-    event XVSVestingSet(address xvsVestingAddress);
+    /// @notice Emitted when UCOREVestingAddress is set
+    event UCOREVestingSet(address ucoreVestingAddress);
 
     constructor() public {}
 
     function initialize(
         address _urtAddress,
-        address _xvsAddress,
+        address _ucoreAddress,
         uint256 _conversionRatio,
         uint256 _conversionStartTime,
         uint256 _conversionPeriod
@@ -60,8 +60,8 @@ contract URTConverter is URTConverterStorage {
         require(_urtAddress != address(0), "urtAddress cannot be Zero");
         urt = IBEP20(_urtAddress);
 
-        require(_xvsAddress != address(0), "xvsAddress cannot be Zero");
-        xvs = IBEP20(_xvsAddress);
+        require(_ucoreAddress != address(0), "ucoreAddress cannot be Zero");
+        ucore = IBEP20(_ucoreAddress);
 
         require(_conversionRatio > 0, "conversionRatio cannot be Zero");
         conversionRatio = _conversionRatio;
@@ -90,15 +90,15 @@ contract URTConverter is URTConverterStorage {
     }
 
     /**
-     * @notice sets XVSVestingProxy Address
-     * @dev Note: If XVSVestingProxy is not set, then Conversion is not allowed
-     * @param _xvsVestingAddress The XVSVestingProxy Address
+     * @notice sets UCOREVestingProxy Address
+     * @dev Note: If UCOREVestingProxy is not set, then Conversion is not allowed
+     * @param _ucoreVestingAddress The UCOREVestingProxy Address
      */
-    function setXVSVesting(address _xvsVestingAddress) public {
+    function setUCOREVesting(address _ucoreVestingAddress) public {
         require(msg.sender == admin, "only admin may initialize the Vault");
-        require(_xvsVestingAddress != address(0), "xvsVestingAddress cannot be Zero");
-        xvsVesting = IXVSVesting(_xvsVestingAddress);
-        emit XVSVestingSet(_xvsVestingAddress);
+        require(_ucoreVestingAddress != address(0), "ucoreVestingAddress cannot be Zero");
+        ucoreVesting = IUCOREVesting(_ucoreVestingAddress);
+        emit UCOREVestingSet(_ucoreVestingAddress);
     }
 
     modifier isInitialized() {
@@ -132,25 +132,25 @@ contract URTConverter is URTConverterStorage {
     }
 
     /**
-     * @notice Transfer URT and redeem XVS
-     * @dev Note: If there is not enough XVS, we do not perform the conversion.
+     * @notice Transfer URT and redeem UCORE
+     * @dev Note: If there is not enough UCORE, we do not perform the conversion.
      * @param urtAmount The amount of URT
      */
     function convert(uint256 urtAmount) external isInitialized checkForActiveConversionPeriod nonReentrant {
         require(
-            address(xvsVesting) != address(0) && address(xvsVesting) != DEAD_ADDRESS,
-            "XVS-Vesting Address is not set"
+            address(ucoreVesting) != address(0) && address(ucoreVesting) != DEAD_ADDRESS,
+            "UCORE-Vesting Address is not set"
         );
         require(urtAmount > 0, "URT amount must be non-zero");
         totalUrtConverted = totalUrtConverted.add(urtAmount);
 
-        uint256 redeemAmount = urtAmount.mul(conversionRatio).mul(xvsDecimalsMultiplier).div(1e18).div(
+        uint256 redeemAmount = urtAmount.mul(conversionRatio).mul(ucoreDecimalsMultiplier).div(1e18).div(
             urtDecimalsMultiplier
         );
 
-        emit TokenConverted(msg.sender, address(urt), urtAmount, address(xvs), redeemAmount);
+        emit TokenConverted(msg.sender, address(urt), urtAmount, address(ucore), redeemAmount);
         urt.safeTransferFrom(msg.sender, DEAD_ADDRESS, urtAmount);
-        xvsVesting.deposit(msg.sender, redeemAmount);
+        ucoreVesting.deposit(msg.sender, redeemAmount);
     }
 
     /*** Admin Functions ***/
