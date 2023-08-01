@@ -87,7 +87,7 @@ contract UCoreVestingProxy is UCoreVestingAdminStorage {
     }
 
     /**
-     * @notice Accepts new implementation of URT Vault. msg.sender must be pendingImplementation
+     * @notice Accepts new implementation of VRT Vault. msg.sender must be pendingImplementation
      * @dev Admin function for new implementation to accept it's role as implementation
      */
     function _acceptImplementation() public {

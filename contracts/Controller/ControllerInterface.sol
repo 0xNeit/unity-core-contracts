@@ -87,18 +87,18 @@ contract ControllerInterfaceG1 {
         uint repayAmount
     ) external view returns (uint, uint);
 
-    function setMintedVAIOf(address owner, uint amount) external returns (uint);
+    function setMintedUAIOf(address owner, uint amount) external returns (uint);
 }
 
 contract ControllerInterfaceG2 is ControllerInterfaceG1 {
-    function liquidateVAICalculateSeizeTokens(
+    function liquidateUAICalculateSeizeTokens(
         address vTokenCollateral,
         uint repayAmount
     ) external view returns (uint, uint);
 }
 
 contract ControllerInterfaceG3 is ControllerInterfaceG2 {
-    function liquidateVAICalculateSeizeTokens(
+    function liquidateUAICalculateSeizeTokens(
         address vTokenCollateral,
         uint repayAmount
     ) external view returns (uint, uint);
@@ -140,7 +140,7 @@ contract ControllerInterface is ControllerInterfaceG4 {
     function approvedDelegates(address borrower, address delegate) external view returns (bool);
 }
 
-interface IVAIVault {
+interface IUAIVault {
     function updatePendingRewards() external;
 }
 
