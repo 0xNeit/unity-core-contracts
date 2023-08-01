@@ -5,7 +5,7 @@ import "../Controller/Controller.sol";
 contract ControllerScenario is Controller {
     uint public blockNumber;
     address public xvsAddress;
-    address public vaiAddress;
+    address public uaiAddress;
 
     constructor() public Controller() {}
 
@@ -17,12 +17,12 @@ contract ControllerScenario is Controller {
         return xvsAddress;
     }
 
-    function setVAIAddress(address vaiAddress_) public {
-        vaiAddress = vaiAddress_;
+    function setUAIAddress(address uaiAddress_) public {
+        uaiAddress = uaiAddress_;
     }
 
-    function getVAIAddress() public view returns (address) {
-        return vaiAddress;
+    function getUAIAddress() public view returns (address) {
+        return uaiAddress;
     }
 
     function membershipLength(VToken vToken) public view returns (uint) {

@@ -38,7 +38,7 @@ library Address {
      * @dev Converts an `address` into `address payable`. Note that this is
      * simply a type cast: the actual underlying value is not changed.
      *
-     * _Available since v2.4.0._
+     * _Auailable since v2.4.0._
      */
     function toPayable(address account) internal pure returns (address payable) {
         return address(uint160(account));
@@ -60,7 +60,7 @@ library Address {
      * {ReentrancyGuard} or the
      * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
      *
-     * _Available since v2.4.0._
+     * _Auailable since v2.4.0._
      */
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");

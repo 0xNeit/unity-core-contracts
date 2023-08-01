@@ -11,7 +11,7 @@ interface ControllerLensInterface {
         uint actualRepayAmount
     ) external view returns (uint, uint);
 
-    function liquidateVAICalculateSeizeTokens(
+    function liquidateUAICalculateSeizeTokens(
         address controller,
         address vTokenCollateral,
         uint actualRepayAmount

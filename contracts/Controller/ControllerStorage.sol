@@ -2,7 +2,7 @@ pragma solidity ^0.5.16;
 
 import "../Tokens/VTokens/VToken.sol";
 import "../Oracle/PriceOracle.sol";
-import "../Tokens/VAI/VAIControllerInterface.sol";
+import "../Tokens/UAI/UAIControllerInterface.sol";
 import "./ControllerLensInterface.sol";
 
 contract UnitrollerAdminStorage {
@@ -123,41 +123,41 @@ contract ControllerV1Storage is UnitrollerAdminStorage {
     /// @notice The XVS accrued but not yet transferred to each user
     mapping(address => uint) public venusAccrued;
 
-    /// @notice The Address of VAIController
-    VAIControllerInterface public vaiController;
+    /// @notice The Address of UAIController
+    UAIControllerInterface public uaiController;
 
-    /// @notice The minted VAI amount to each user
-    mapping(address => uint) public mintedVAIs;
+    /// @notice The minted UAI amount to each user
+    mapping(address => uint) public mintedUAIs;
 
-    /// @notice VAI Mint Rate as a percentage
-    uint public vaiMintRate;
+    /// @notice UAI Mint Rate as a percentage
+    uint public uaiMintRate;
 
     /**
      * @notice The Pause Guardian can pause certain actions as a safety mechanism.
      */
-    bool public mintVAIGuardianPaused;
-    bool public repayVAIGuardianPaused;
+    bool public mintUAIGuardianPaused;
+    bool public repayUAIGuardianPaused;
 
     /**
      * @notice Pause/Unpause whole protocol actions
      */
     bool public protocolPaused;
 
-    /// @notice The rate at which the flywheel distributes XVS to VAI Minters, per block (deprecated)
-    uint private venusVAIRate;
+    /// @notice The rate at which the flywheel distributes XVS to UAI Minters, per block (deprecated)
+    uint private venusUAIRate;
 }
 
 contract ControllerV2Storage is ControllerV1Storage {
-    /// @notice The rate at which the flywheel distributes XVS to VAI Vault, per block
-    uint public venusVAIVaultRate;
+    /// @notice The rate at which the flywheel distributes XVS to UAI Vault, per block
+    uint public venusUAIVaultRate;
 
-    // address of VAI Vault
-    address public vaiVaultAddress;
+    // address of UAI Vault
+    address public uaiVaultAddress;
 
-    // start block of release to VAI Vault
+    // start block of release to UAI Vault
     uint256 public releaseStartBlock;
 
-    // minimum release amount to VAI Vault
+    // minimum release amount to UAI Vault
     uint256 public minReleaseAmount;
 }
 

@@ -144,8 +144,8 @@ contract ControllerHarness is Controller {
         }
     }
 
-    function harnessSetMintedVAIs(address user, uint amount) public {
-        mintedVAIs[user] = amount;
+    function harnessSetMintedUAIs(address user, uint amount) public {
+        mintedUAIs[user] = amount;
     }
 
     function harnessFastForward(uint blocks) public returns (uint) {
@@ -218,9 +218,9 @@ contract BoolController is ControllerInterface {
 
     bool public protocolPaused = false;
 
-    mapping(address => uint) public mintedVAIs;
-    bool internal vaiFailCalculateSeizeTokens;
-    uint internal vaiCalculatedSeizeTokens;
+    mapping(address => uint) public mintedUAIs;
+    bool internal uaiFailCalculateSeizeTokens;
+    uint internal uaiCalculatedSeizeTokens;
 
     uint internal noError = 0;
     uint internal opaqueError = noError + 11; // an arbitrary, opaque error code
@@ -421,13 +421,13 @@ contract BoolController is ControllerInterface {
 
     /*** Special Liquidation Calculation ***/
 
-    function liquidateVAICalculateSeizeTokens(
+    function liquidateUAICalculateSeizeTokens(
         address _vTokenCollateral,
         uint _repayAmount
     ) external view returns (uint, uint) {
         _vTokenCollateral;
         _repayAmount;
-        return vaiFailCalculateSeizeTokens ? (opaqueError, 0) : (noError, vaiCalculatedSeizeTokens);
+        return uaiFailCalculateSeizeTokens ? (opaqueError, 0) : (noError, uaiCalculatedSeizeTokens);
     }
 
     /**** Mock Settors ****/
@@ -505,31 +505,31 @@ contract BoolController is ControllerInterface {
         failCalculateSeizeTokens = shouldFail;
     }
 
-    function setVAICalculatedSeizeTokens(uint vaiSeizeTokens_) public {
-        vaiCalculatedSeizeTokens = vaiSeizeTokens_;
+    function setUAICalculatedSeizeTokens(uint uaiSeizeTokens_) public {
+        uaiCalculatedSeizeTokens = uaiSeizeTokens_;
     }
 
-    function setVAIFailCalculateSeizeTokens(bool vaiShouldFail) public {
-        vaiFailCalculateSeizeTokens = vaiShouldFail;
+    function setUAIFailCalculateSeizeTokens(bool uaiShouldFail) public {
+        uaiFailCalculateSeizeTokens = uaiShouldFail;
     }
 
-    function harnessSetMintedVAIOf(address owner, uint amount) external returns (uint) {
-        mintedVAIs[owner] = amount;
+    function harnessSetMintedUAIOf(address owner, uint amount) external returns (uint) {
+        mintedUAIs[owner] = amount;
         return noError;
     }
 
-    // function mintedVAIs(address owner) external pure returns (uint) {
+    // function mintedUAIs(address owner) external pure returns (uint) {
     //     owner;
     //     return 1e18;
     // }
 
-    function setMintedVAIOf(address owner, uint amount) external returns (uint) {
+    function setMintedUAIOf(address owner, uint amount) external returns (uint) {
         owner;
         amount;
         return noError;
     }
 
-    function vaiMintRate() external pure returns (uint) {
+    function uaiMintRate() external pure returns (uint) {
         return 1e18;
     }
 

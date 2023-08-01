@@ -2,7 +2,7 @@ pragma solidity ^0.5.16;
 import "../Utils/SafeMath.sol";
 import "../Utils/IBEP20.sol";
 
-contract VAIVaultAdminStorage {
+contract UAIVaultAdminStorage {
     /**
      * @notice Administrator for this contract
      */
@@ -14,22 +14,22 @@ contract VAIVaultAdminStorage {
     address public pendingAdmin;
 
     /**
-     * @notice Active brains of VAI Vault
+     * @notice Active brains of UAI Vault
      */
-    address public vaiVaultImplementation;
+    address public uaiVaultImplementation;
 
     /**
-     * @notice Pending brains of VAI Vault
+     * @notice Pending brains of UAI Vault
      */
-    address public pendingVAIVaultImplementation;
+    address public pendingUAIVaultImplementation;
 }
 
-contract VAIVaultStorage is VAIVaultAdminStorage {
+contract UAIVaultStorage is UAIVaultAdminStorage {
     /// @notice The XVS TOKEN!
     IBEP20 public xvs;
 
-    /// @notice The VAI TOKEN!
-    IBEP20 public vai;
+    /// @notice The UAI TOKEN!
+    IBEP20 public uai;
 
     /// @notice Guard variable for re-entrancy checks
     bool internal _notEntered;

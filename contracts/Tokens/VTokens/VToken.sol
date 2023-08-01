@@ -1478,7 +1478,7 @@ contract VToken is VTokenInterface, Exponential, TokenErrorReporter {
 
         // Fail gracefully if protocol has insufficient underlying cash
         if (getCashPrior() < reduceAmount) {
-            return fail(Error.TOKEN_INSUFFICIENT_CASH, FailureInfo.REDUCE_RESERVES_CASH_NOT_AVAILABLE);
+            return fail(Error.TOKEN_INSUFFICIENT_CASH, FailureInfo.REDUCE_RESERVES_CASH_NOT_AUAILABLE);
         }
 
         // Check reduceAmount ≤ reserves[n] (totalReserves)

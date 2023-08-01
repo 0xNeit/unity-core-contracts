@@ -19,7 +19,7 @@ pragma solidity ^0.5.16;
 
 import "./lib.sol";
 
-contract VAI is LibNote {
+contract UAI is LibNote {
     // --- Auth ---
     mapping(address => uint) public wards;
 
@@ -32,13 +32,13 @@ contract VAI is LibNote {
     }
 
     modifier auth() {
-        require(wards[msg.sender] == 1, "VAI/not-authorized");
+        require(wards[msg.sender] == 1, "UAI/not-authorized");
         _;
     }
 
     // --- BEP20 Data ---
-    string public constant name = "VAI Stablecoin";
-    string public constant symbol = "VAI";
+    string public constant name = "UAI Stablecoin";
+    string public constant symbol = "UAI";
     string public constant version = "1";
     uint8 public constant decimals = 18;
     uint256 public totalSupply;
@@ -52,11 +52,11 @@ contract VAI is LibNote {
 
     // --- Math ---
     function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x, "VAI math error");
+        require((z = x + y) >= x, "UAI math error");
     }
 
     function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x, "VAI math error");
+        require((z = x - y) <= x, "UAI math error");
     }
 
     // --- EIP712 niceties ---
@@ -83,9 +83,9 @@ contract VAI is LibNote {
     }
 
     function transferFrom(address src, address dst, uint wad) public returns (bool) {
-        require(balanceOf[src] >= wad, "VAI/insufficient-balance");
+        require(balanceOf[src] >= wad, "UAI/insufficient-balance");
         if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
-            require(allowance[src][msg.sender] >= wad, "VAI/insufficient-allowance");
+            require(allowance[src][msg.sender] >= wad, "UAI/insufficient-allowance");
             allowance[src][msg.sender] = sub(allowance[src][msg.sender], wad);
         }
         balanceOf[src] = sub(balanceOf[src], wad);
@@ -101,9 +101,9 @@ contract VAI is LibNote {
     }
 
     function burn(address usr, uint wad) external {
-        require(balanceOf[usr] >= wad, "VAI/insufficient-balance");
+        require(balanceOf[usr] >= wad, "UAI/insufficient-balance");
         if (usr != msg.sender && allowance[usr][msg.sender] != uint(-1)) {
-            require(allowance[usr][msg.sender] >= wad, "VAI/insufficient-allowance");
+            require(allowance[usr][msg.sender] >= wad, "UAI/insufficient-allowance");
             allowance[usr][msg.sender] = sub(allowance[usr][msg.sender], wad);
         }
         balanceOf[usr] = sub(balanceOf[usr], wad);
@@ -149,10 +149,10 @@ contract VAI is LibNote {
             )
         );
 
-        require(holder != address(0), "VAI/invalid-address-0");
-        require(holder == ecrecover(digest, v, r, s), "VAI/invalid-permit");
-        require(expiry == 0 || now <= expiry, "VAI/permit-expired");
-        require(nonce == nonces[holder]++, "VAI/invalid-nonce");
+        require(holder != address(0), "UAI/invalid-address-0");
+        require(holder == ecrecover(digest, v, r, s), "UAI/invalid-permit");
+        require(expiry == 0 || now <= expiry, "UAI/permit-expired");
+        require(nonce == nonces[holder]++, "UAI/invalid-nonce");
         uint wad = allowed ? uint(-1) : 0;
         allowance[holder][spender] = wad;
         emit Approval(holder, spender, wad);

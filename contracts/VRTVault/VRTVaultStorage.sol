@@ -19,7 +19,7 @@ contract VRTVaultAdminStorage {
     address public implementation;
 
     /**
-     * @notice Pending brains of VAI Vault
+     * @notice Pending brains of UAI Vault
      */
     address public pendingImplementation;
 }

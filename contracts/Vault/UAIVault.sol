@@ -2,24 +2,24 @@ pragma solidity 0.5.16;
 
 import "../Utils/SafeBEP20.sol";
 import "../Utils/IBEP20.sol";
-import "./VAIVaultStorage.sol";
-import "./VAIVaultErrorReporter.sol";
+import "./UAIVaultStorage.sol";
+import "./UAIVaultErrorReporter.sol";
 import "../Governance/AccessControlledV5.sol";
 
-interface IVAIVaultProxy {
+interface IUAIVaultProxy {
     function _acceptImplementation() external returns (uint);
 
     function admin() external returns (address);
 }
 
-contract VAIVault is VAIVaultStorage, AccessControlledV5 {
+contract UAIVault is UAIVaultStorage, AccessControlledV5 {
     using SafeMath for uint256;
     using SafeBEP20 for IBEP20;
 
-    /// @notice Event emitted when VAI deposit
+    /// @notice Event emitted when UAI deposit
     event Deposit(address indexed user, uint256 amount);
 
-    /// @notice Event emitted when VAI withrawal
+    /// @notice Event emitted when UAI withrawal
     event Withdraw(address indexed user, uint256 amount);
 
     /// @notice Event emitted when vault is paused
@@ -78,7 +78,7 @@ contract VAIVault is VAIVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice Deposit VAI to VAIVault for XVS allocation
+     * @notice Deposit UAI to UAIVault for XVS allocation
      * @param _amount The amount to deposit to vault
      */
     function deposit(uint256 _amount) external nonReentrant isActive {
@@ -91,7 +91,7 @@ contract VAIVault is VAIVaultStorage, AccessControlledV5 {
 
         // Transfer in the amounts from user
         if (_amount > 0) {
-            vai.safeTransferFrom(address(msg.sender), address(this), _amount);
+            uai.safeTransferFrom(address(msg.sender), address(this), _amount);
             user.amount = user.amount.add(_amount);
         }
 
@@ -100,7 +100,7 @@ contract VAIVault is VAIVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice Withdraw VAI from VAIVault
+     * @notice Withdraw UAI from UAIVault
      * @param _amount The amount to withdraw from vault
      */
     function withdraw(uint256 _amount) external nonReentrant isActive {
@@ -108,14 +108,14 @@ contract VAIVault is VAIVaultStorage, AccessControlledV5 {
     }
 
     /**
-     * @notice Claim XVS from VAIVault
+     * @notice Claim XVS from UAIVault
      */
     function claim() external nonReentrant isActive {
         _withdraw(msg.sender, 0);
     }
 
     /**
-     * @notice Claim XVS from VAIVault
+     * @notice Claim XVS from UAIVault
      * @param account The account for which to claim XVS
      */
     function claim(address account) external nonReentrant isActive {
@@ -136,7 +136,7 @@ contract VAIVault is VAIVaultStorage, AccessControlledV5 {
 
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
-            vai.safeTransfer(address(account), _amount);
+            uai.safeTransfer(address(account), _amount);
         }
         user.rewardDebt = user.amount.mul(accXVSPerShare).div(1e18);
 
@@ -201,28 +201,28 @@ contract VAIVault is VAIVaultStorage, AccessControlledV5 {
     function updateVault() internal {
         updatePendingRewards();
 
-        uint256 vaiBalance = vai.balanceOf(address(this));
-        if (vaiBalance == 0) {
+        uint256 uaiBalance = uai.balanceOf(address(this));
+        if (uaiBalance == 0) {
             // avoids division by 0 errors
             return;
         }
 
-        accXVSPerShare = accXVSPerShare.add(pendingRewards.mul(1e18).div(vaiBalance));
+        accXVSPerShare = accXVSPerShare.add(pendingRewards.mul(1e18).div(uaiBalance));
         pendingRewards = 0;
     }
 
     /*** Admin Functions ***/
 
-    function _become(IVAIVaultProxy vaiVaultProxy) external {
-        require(msg.sender == vaiVaultProxy.admin(), "only proxy admin can change brains");
-        require(vaiVaultProxy._acceptImplementation() == 0, "change not authorized");
+    function _become(IUAIVaultProxy uaiVaultProxy) external {
+        require(msg.sender == uaiVaultProxy.admin(), "only proxy admin can change brains");
+        require(uaiVaultProxy._acceptImplementation() == 0, "change not authorized");
     }
 
-    function setVenusInfo(address _xvs, address _vai) external onlyAdmin {
-        require(_xvs != address(0) && _vai != address(0), "addresses must not be zero");
-        require(address(xvs) == address(0) && address(vai) == address(0), "addresses already set");
+    function setVenusInfo(address _xvs, address _uai) external onlyAdmin {
+        require(_xvs != address(0) && _uai != address(0), "addresses must not be zero");
+        require(address(xvs) == address(0) && address(uai) == address(0), "addresses already set");
         xvs = IBEP20(_xvs);
-        vai = IBEP20(_vai);
+        uai = IBEP20(_uai);
 
         _notEntered = true;
     }

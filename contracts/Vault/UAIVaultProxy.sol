@@ -1,21 +1,17 @@
 pragma solidity ^0.5.16;
 
-import "../../Utils/ErrorReporter.sol";
-import "./VAIControllerStorage.sol";
+import "./UAIVaultStorage.sol";
+import "./UAIVaultErrorReporter.sol";
 
-/**
- * @title VAI Unitroller
- * @author Venus
- * @notice This is the proxy contract for the VAIController
- */
-contract VAIUnitroller is VAIUnitrollerAdminStorage, VAIControllerErrorReporter {
+
+contract UAIVaultProxy is UAIVaultAdminStorage, UAIVaultErrorReporter {
     /**
-     * @notice Emitted when pendingVAIControllerImplementation is changed
+     * @notice Emitted when pendingUAIVaultImplementation is changed
      */
     event NewPendingImplementation(address oldPendingImplementation, address newPendingImplementation);
 
     /**
-     * @notice Emitted when pendingVAIControllerImplementation is accepted, which means controller implementation is updated
+     * @notice Emitted when pendingUAIVaultImplementation is accepted, which means UAI Vault implementation is updated
      */
     event NewImplementation(address oldImplementation, address newImplementation);
 
@@ -40,36 +36,36 @@ contract VAIUnitroller is VAIUnitrollerAdminStorage, VAIControllerErrorReporter 
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_PENDING_IMPLEMENTATION_OWNER_CHECK);
         }
 
-        address oldPendingImplementation = pendingVAIControllerImplementation;
+        address oldPendingImplementation = pendingUAIVaultImplementation;
 
-        pendingVAIControllerImplementation = newPendingImplementation;
+        pendingUAIVaultImplementation = newPendingImplementation;
 
-        emit NewPendingImplementation(oldPendingImplementation, pendingVAIControllerImplementation);
+        emit NewPendingImplementation(oldPendingImplementation, pendingUAIVaultImplementation);
 
         return uint(Error.NO_ERROR);
     }
 
     /**
-     * @notice Accepts new implementation of controller. msg.sender must be pendingImplementation
+     * @notice Accepts new implementation of UAI Vault. msg.sender must be pendingImplementation
      * @dev Admin function for new implementation to accept it's role as implementation
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function _acceptImplementation() public returns (uint) {
         // Check caller is pendingImplementation
-        if (msg.sender != pendingVAIControllerImplementation) {
+        if (msg.sender != pendingUAIVaultImplementation) {
             return fail(Error.UNAUTHORIZED, FailureInfo.ACCEPT_PENDING_IMPLEMENTATION_ADDRESS_CHECK);
         }
 
         // Save current values for inclusion in log
-        address oldImplementation = vaiControllerImplementation;
-        address oldPendingImplementation = pendingVAIControllerImplementation;
+        address oldImplementation = uaiVaultImplementation;
+        address oldPendingImplementation = pendingUAIVaultImplementation;
 
-        vaiControllerImplementation = pendingVAIControllerImplementation;
+        uaiVaultImplementation = pendingUAIVaultImplementation;
 
-        pendingVAIControllerImplementation = address(0);
+        pendingUAIVaultImplementation = address(0);
 
-        emit NewImplementation(oldImplementation, vaiControllerImplementation);
-        emit NewPendingImplementation(oldPendingImplementation, pendingVAIControllerImplementation);
+        emit NewImplementation(oldImplementation, uaiVaultImplementation);
+        emit NewPendingImplementation(oldPendingImplementation, pendingUAIVaultImplementation);
 
         return uint(Error.NO_ERROR);
     }
@@ -132,7 +128,7 @@ contract VAIUnitroller is VAIUnitrollerAdminStorage, VAIControllerErrorReporter 
      */
     function() external payable {
         // delegate all other functions to current implementation
-        (bool success, ) = vaiControllerImplementation.delegatecall(msg.data);
+        (bool success, ) = uaiVaultImplementation.delegatecall(msg.data);
 
         assembly {
             let free_mem_ptr := mload(0x40)

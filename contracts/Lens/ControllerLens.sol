@@ -7,7 +7,7 @@ import "../Tokens/EIP20Interface.sol";
 import "../Oracle/PriceOracle.sol";
 import "../Utils/ErrorReporter.sol";
 import "../Controller/Controller.sol";
-import "../Tokens/VAI/VAIControllerInterface.sol";
+import "../Tokens/UAI/UAIControllerInterface.sol";
 
 /**
  * @title ControllerLens Contract
@@ -80,19 +80,19 @@ contract ControllerLens is ControllerLensInterface, ControllerErrorReporter, Exp
     }
 
     /**
-     * @notice Computes the number of VAI tokens to be seized in a liquidation event
+     * @notice Computes the number of UAI tokens to be seized in a liquidation event
      * @param controller Address of controller
      * @param vTokenCollateral Address of collateral for vToken
      * @param actualRepayAmount Repayment amount i.e amount to be repaid of the total borrowed amount
      * @return A tuple of error code, and tokens to seize
      */
-    function liquidateVAICalculateSeizeTokens(
+    function liquidateUAICalculateSeizeTokens(
         address controller,
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint) {
         /* Read oracle prices for borrowed and collateral markets */
-        uint priceBorrowedMantissa = 1e18; // Note: this is VAI
+        uint priceBorrowedMantissa = 1e18; // Note: this is UAI
         uint priceCollateralMantissa = Controller(controller).oracle().getUnderlyingPrice(VToken(vTokenCollateral));
         if (priceCollateralMantissa == 0) {
             return (uint(Error.PRICE_ERROR), 0);
@@ -200,10 +200,10 @@ contract ControllerLens is ControllerLensInterface, ControllerErrorReporter, Exp
             }
         }
 
-        VAIControllerInterface vaiController = Controller(controller).vaiController();
+        UAIControllerInterface uaiController = Controller(controller).uaiController();
 
-        if (address(vaiController) != address(0)) {
-            vars.sumBorrowPlusEffects = add_(vars.sumBorrowPlusEffects, vaiController.getVAIRepayAmount(account));
+        if (address(uaiController) != address(0)) {
+            vars.sumBorrowPlusEffects = add_(vars.sumBorrowPlusEffects, uaiController.getUAIRepayAmount(account));
         }
 
         // These are safe, as the underflow condition is checked first

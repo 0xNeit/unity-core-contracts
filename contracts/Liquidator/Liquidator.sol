@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
-import { IController, IVToken, IVBep20, IVCORE, IVAIController } from "./Interfaces.sol";
+import { IController, IVToken, IVBep20, IVCORE, IUAIController } from "./Interfaces.sol";
 
 /**
  * @title Liquidator
@@ -21,9 +21,9 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IController public immutable controller;
 
-    /// @notice Address of VAIUnitroller contract.
+    /// @notice Address of UAIUnitroller contract.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IVAIController public immutable vaiController;
+    IUAIController public immutable uaiController;
 
     /// @notice Address of Venus Treasury.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -114,7 +114,7 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
         ensureNonzeroAddress(treasury_);
         vCore = IVCORE(vCore_);
         controller = IController(controller_);
-        vaiController = IVAIController(IController(controller_).vaiController());
+        uaiController = IUAIController(IController(controller_).uaiController());
         treasury = treasury_;
         _disableInitializers();
     }
@@ -215,8 +215,8 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
             if (msg.value != 0) {
                 revert WrongTransactionAmount(0, msg.value);
             }
-            if (vToken == address(vaiController)) {
-                _liquidateVAI(borrower, repayAmount, vTokenCollateral);
+            if (vToken == address(uaiController)) {
+                _liquidateUAI(borrower, repayAmount, vTokenCollateral);
             } else {
                 _liquidateBep20(IVBep20(vToken), borrower, repayAmount, vTokenCollateral);
             }
@@ -253,14 +253,14 @@ contract Liquidator is Ownable2StepUpgradeable, ReentrancyGuardUpgradeable {
         requireNoError(vToken.liquidateBorrow(borrower, actualRepayAmount, vTokenCollateral));
     }
 
-    /// @dev Transfers BEP20 tokens to self, then approves VAI to take these tokens.
-    function _liquidateVAI(address borrower, uint256 repayAmount, IVToken vTokenCollateral) internal {
-        IERC20Upgradeable vai = IERC20Upgradeable(vaiController.getVAIAddress());
-        vai.safeTransferFrom(msg.sender, address(this), repayAmount);
-        vai.safeApprove(address(vaiController), 0);
-        vai.safeApprove(address(vaiController), repayAmount);
+    /// @dev Transfers BEP20 tokens to self, then approves UAI to take these tokens.
+    function _liquidateUAI(address borrower, uint256 repayAmount, IVToken vTokenCollateral) internal {
+        IERC20Upgradeable uai = IERC20Upgradeable(uaiController.getUAIAddress());
+        uai.safeTransferFrom(msg.sender, address(this), repayAmount);
+        uai.safeApprove(address(uaiController), 0);
+        uai.safeApprove(address(uaiController), repayAmount);
 
-        (uint err, ) = vaiController.liquidateVAI(borrower, repayAmount, vTokenCollateral);
+        (uint err, ) = uaiController.liquidateUAI(borrower, repayAmount, vTokenCollateral);
         requireNoError(err);
     }
 

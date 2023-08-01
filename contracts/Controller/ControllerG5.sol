@@ -4,7 +4,7 @@ import "../Oracle/PriceOracle.sol";
 import "../Tokens/VTokens/VToken.sol";
 import "../Utils/ErrorReporter.sol";
 import "../Tokens/XVS/XVS.sol";
-import "../Tokens/VAI/VAI.sol";
+import "../Tokens/UAI/UAI.sol";
 import "./ControllerInterface.sol";
 import "./ControllerStorage.sol";
 import "./Unitroller.sol";
@@ -35,8 +35,8 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
     /// @notice Emitted when price oracle is changed
     event NewPriceOracle(PriceOracle oldPriceOracle, PriceOracle newPriceOracle);
 
-    /// @notice Emitted when VAI Vault info is changed
-    event NewVAIVaultInfo(address vault_, uint releaseStartBlock_, uint releaseInterval_);
+    /// @notice Emitted when UAI Vault info is changed
+    event NewUAIVaultInfo(address vault_, uint releaseStartBlock_, uint releaseInterval_);
 
     /// @notice Emitted when pause guardian is changed
     event NewPauseGuardian(address oldPauseGuardian, address newPauseGuardian);
@@ -47,8 +47,8 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
     /// @notice Emitted when an action is paused on a market
     event ActionPaused(VToken vToken, string action, bool pauseState);
 
-    /// @notice Emitted when Venus VAI Vault rate is changed
-    event NewVenusVAIVaultRate(uint oldVenusVAIVaultRate, uint newVenusVAIVaultRate);
+    /// @notice Emitted when Venus UAI Vault rate is changed
+    event NewVenusUAIVaultRate(uint oldVenusUAIVaultRate, uint newVenusUAIVaultRate);
 
     /// @notice Emitted when a new Venus speed is calculated for a market
     event VenusSpeedUpdated(VToken indexed vToken, uint newSpeed);
@@ -69,17 +69,17 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
         uint venusBorrowIndex
     );
 
-    /// @notice Emitted when XVS is distributed to a VAI minter
-    event DistributedVAIMinterVenus(address indexed vaiMinter, uint venusDelta, uint venusVAIMintIndex);
+    /// @notice Emitted when XVS is distributed to a UAI minter
+    event DistributedUAIMinterVenus(address indexed uaiMinter, uint venusDelta, uint venusUAIMintIndex);
 
-    /// @notice Emitted when XVS is distributed to VAI Vault
-    event DistributedVAIVaultVenus(uint amount);
+    /// @notice Emitted when XVS is distributed to UAI Vault
+    event DistributedUAIVaultVenus(uint amount);
 
-    /// @notice Emitted when VAIController is changed
-    event NewVAIController(VAIControllerInterface oldVAIController, VAIControllerInterface newVAIController);
+    /// @notice Emitted when UAIController is changed
+    event NewUAIController(UAIControllerInterface oldUAIController, UAIControllerInterface newUAIController);
 
-    /// @notice Emitted when VAI mint rate is changed by admin
-    event NewVAIMintRate(uint oldVAIMintRate, uint newVAIMintRate);
+    /// @notice Emitted when UAI mint rate is changed by admin
+    event NewUAIMintRate(uint oldUAIMintRate, uint newUAIMintRate);
 
     /// @notice Emitted when protocol state is changed by admin
     event ActionProtocolPaused(bool state);
@@ -530,7 +530,7 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
         liquidator;
 
         if (
-            !(markets[vTokenBorrowed].isListed || address(vTokenBorrowed) == address(vaiController)) ||
+            !(markets[vTokenBorrowed].isListed || address(vTokenBorrowed) == address(uaiController)) ||
             !markets[vTokenCollateral].isListed
         ) {
             return uint(Error.MARKET_NOT_LISTED);
@@ -547,10 +547,10 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
 
         /* The liquidator may not repay more than what is allowed by the closeFactor */
         uint borrowBalance;
-        if (address(vTokenBorrowed) != address(vaiController)) {
+        if (address(vTokenBorrowed) != address(uaiController)) {
             borrowBalance = VToken(vTokenBorrowed).borrowBalanceStored(borrower);
         } else {
-            borrowBalance = mintedVAIs[borrower];
+            borrowBalance = mintedUAIs[borrower];
         }
 
         uint maxClose = mul_ScalarTruncate(Exp({ mantissa: closeFactorMantissa }), borrowBalance);
@@ -612,10 +612,10 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
         // Shh - currently unused
         seizeTokens;
 
-        // We've added VAIController as a borrowed token list check for seize
+        // We've added UAIController as a borrowed token list check for seize
         if (
             !markets[vTokenCollateral].isListed ||
-            !(markets[vTokenBorrowed].isListed || address(vTokenBorrowed) == address(vaiController))
+            !(markets[vTokenBorrowed].isListed || address(vTokenBorrowed) == address(uaiController))
         ) {
             return uint(Error.MARKET_NOT_LISTED);
         }
@@ -846,7 +846,7 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
             }
         }
 
-        vars.sumBorrowPlusEffects = add_(vars.sumBorrowPlusEffects, mintedVAIs[account]);
+        vars.sumBorrowPlusEffects = add_(vars.sumBorrowPlusEffects, mintedUAIs[account]);
 
         // These are safe, as the underflow condition is checked first
         if (vars.sumCollateral > vars.sumBorrowPlusEffects) {
@@ -904,12 +904,12 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
      * @param actualRepayAmount The amount of vTokenBorrowed underlying to convert into vTokenCollateral tokens
      * @return (errorCode, number of vTokenCollateral tokens to be seized in a liquidation)
      */
-    function liquidateVAICalculateSeizeTokens(
+    function liquidateUAICalculateSeizeTokens(
         address vTokenCollateral,
         uint actualRepayAmount
     ) external view returns (uint, uint) {
         /* Read oracle prices for borrowed and collateral markets */
-        uint priceBorrowedMantissa = 1e18; // Note: this is VAI
+        uint priceBorrowedMantissa = 1e18; // Note: this is UAI
         uint priceCollateralMantissa = oracle.getUnderlyingPrice(VToken(vTokenCollateral));
         if (priceCollateralMantissa == 0) {
             return (uint(Error.PRICE_ERROR), 0);
@@ -1148,30 +1148,30 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
     }
 
     /**
-     * @notice Sets a new VAI controller
-     * @dev Admin function to set a new VAI controller
+     * @notice Sets a new UAI controller
+     * @dev Admin function to set a new UAI controller
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setVAIController(VAIControllerInterface vaiController_) external returns (uint) {
+    function _setUAIController(UAIControllerInterface uaiController_) external returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_VAICONTROLLER_OWNER_CHECK);
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_UAICONTROLLER_OWNER_CHECK);
         }
 
-        VAIControllerInterface oldRate = vaiController;
-        vaiController = vaiController_;
-        emit NewVAIController(oldRate, vaiController_);
+        UAIControllerInterface oldRate = uaiController;
+        uaiController = uaiController_;
+        emit NewUAIController(oldRate, uaiController_);
     }
 
-    function _setVAIMintRate(uint newVAIMintRate) external returns (uint) {
+    function _setUAIMintRate(uint newUAIMintRate) external returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_VAI_MINT_RATE_CHECK);
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_UAI_MINT_RATE_CHECK);
         }
 
-        uint oldVAIMintRate = vaiMintRate;
-        vaiMintRate = newVAIMintRate;
-        emit NewVAIMintRate(oldVAIMintRate, newVAIMintRate);
+        uint oldUAIMintRate = uaiMintRate;
+        uaiMintRate = newUAIMintRate;
+        emit NewUAIMintRate(oldUAIMintRate, newUAIMintRate);
 
         return uint(Error.NO_ERROR);
     }
@@ -1302,7 +1302,7 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
      * @param supplier The address of the supplier to distribute XVS to
      */
     function distributeSupplierVenus(address vToken, address supplier) internal {
-        if (address(vaiVaultAddress) != address(0)) {
+        if (address(uaiVaultAddress) != address(0)) {
             releaseToVault();
         }
 
@@ -1330,7 +1330,7 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
      * @param borrower The address of the borrower to distribute XVS to
      */
     function distributeBorrowerVenus(address vToken, address borrower, Exp memory marketBorrowIndex) internal {
-        if (address(vaiVaultAddress) != address(0)) {
+        if (address(uaiVaultAddress) != address(0)) {
             releaseToVault();
         }
 
@@ -1350,32 +1350,32 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
     }
 
     /**
-     * @notice Calculate XVS accrued by a VAI minter and possibly transfer it to them
-     * @dev VAI minters will not begin to accrue until after the first interaction with the protocol.
-     * @param vaiMinter The address of the VAI minter to distribute XVS to
+     * @notice Calculate XVS accrued by a UAI minter and possibly transfer it to them
+     * @dev UAI minters will not begin to accrue until after the first interaction with the protocol.
+     * @param uaiMinter The address of the UAI minter to distribute XVS to
      */
-    function distributeVAIMinterVenus(address vaiMinter) public {
-        if (address(vaiVaultAddress) != address(0)) {
+    function distributeUAIMinterVenus(address uaiMinter) public {
+        if (address(uaiVaultAddress) != address(0)) {
             releaseToVault();
         }
 
-        if (address(vaiController) != address(0)) {
-            uint vaiMinterAccrued;
-            uint vaiMinterDelta;
-            uint vaiMintIndexMantissa;
+        if (address(uaiController) != address(0)) {
+            uint uaiMinterAccrued;
+            uint uaiMinterDelta;
+            uint uaiMintIndexMantissa;
             uint err;
-            (err, vaiMinterAccrued, vaiMinterDelta, vaiMintIndexMantissa) = vaiController.calcDistributeVAIMinterVenus(
-                vaiMinter
+            (err, uaiMinterAccrued, uaiMinterDelta, uaiMintIndexMantissa) = uaiController.calcDistributeUAIMinterVenus(
+                uaiMinter
             );
             if (err == uint(Error.NO_ERROR)) {
-                venusAccrued[vaiMinter] = vaiMinterAccrued;
-                emit DistributedVAIMinterVenus(vaiMinter, vaiMinterDelta, vaiMintIndexMantissa);
+                venusAccrued[uaiMinter] = uaiMinterAccrued;
+                emit DistributedUAIMinterVenus(uaiMinter, uaiMinterDelta, uaiMintIndexMantissa);
             }
         }
     }
 
     /**
-     * @notice Claim all the xvs accrued by holder in all markets and VAI
+     * @notice Claim all the xvs accrued by holder in all markets and UAI
      * @param holder The address to claim XVS for
      */
     function claimVenus(address holder) public {
@@ -1402,11 +1402,11 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
      */
     function claimVenus(address[] memory holders, VToken[] memory vTokens, bool borrowers, bool suppliers) public {
         uint j;
-        if (address(vaiController) != address(0)) {
-            vaiController.updateVenusVAIMintIndex();
+        if (address(uaiController) != address(0)) {
+            uaiController.updateVenusUAIMintIndex();
         }
         for (j = 0; j < holders.length; j++) {
-            distributeVAIMinterVenus(holders[j]);
+            distributeUAIMinterVenus(holders[j]);
             venusAccrued[holders[j]] = grantXVSInternal(holders[j], venusAccrued[holders[j]]);
         }
         for (uint i = 0; i < vTokens.length; i++) {
@@ -1463,26 +1463,26 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
     }
 
     /**
-     * @notice Set the amount of XVS distributed per block to VAI Vault
-     * @param venusVAIVaultRate_ The amount of XVS wei per block to distribute to VAI Vault
+     * @notice Set the amount of XVS distributed per block to UAI Vault
+     * @param venusUAIVaultRate_ The amount of XVS wei per block to distribute to UAI Vault
      */
-    function _setVenusVAIVaultRate(uint venusVAIVaultRate_) public onlyAdmin {
-        uint oldVenusVAIVaultRate = venusVAIVaultRate;
-        venusVAIVaultRate = venusVAIVaultRate_;
-        emit NewVenusVAIVaultRate(oldVenusVAIVaultRate, venusVAIVaultRate_);
+    function _setVenusUAIVaultRate(uint venusUAIVaultRate_) public onlyAdmin {
+        uint oldVenusUAIVaultRate = venusUAIVaultRate;
+        venusUAIVaultRate = venusUAIVaultRate_;
+        emit NewVenusUAIVaultRate(oldVenusUAIVaultRate, venusUAIVaultRate_);
     }
 
     /**
-     * @notice Set the VAI Vault infos
-     * @param vault_ The address of the VAI Vault
-     * @param releaseStartBlock_ The start block of release to VAI Vault
-     * @param minReleaseAmount_ The minimum release amount to VAI Vault
+     * @notice Set the UAI Vault infos
+     * @param vault_ The address of the UAI Vault
+     * @param releaseStartBlock_ The start block of release to UAI Vault
+     * @param minReleaseAmount_ The minimum release amount to UAI Vault
      */
-    function _setVAIVaultInfo(address vault_, uint256 releaseStartBlock_, uint256 minReleaseAmount_) public onlyAdmin {
-        vaiVaultAddress = vault_;
+    function _setUAIVaultInfo(address vault_, uint256 releaseStartBlock_, uint256 minReleaseAmount_) public onlyAdmin {
+        uaiVaultAddress = vault_;
         releaseStartBlock = releaseStartBlock_;
         minReleaseAmount = minReleaseAmount_;
-        emit NewVAIVaultInfo(vault_, releaseStartBlock_, minReleaseAmount_);
+        emit NewUAIVaultInfo(vault_, releaseStartBlock_, minReleaseAmount_);
     }
 
     /**
@@ -1516,28 +1516,28 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
         return 0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63;
     }
 
-    /*** VAI functions ***/
+    /*** UAI functions ***/
 
     /**
-     * @notice Set the minted VAI amount of the `owner`
+     * @notice Set the minted UAI amount of the `owner`
      * @param owner The address of the account to set
-     * @param amount The amount of VAI to set to the account
-     * @return The number of minted VAI by `owner`
+     * @param amount The amount of UAI to set to the account
+     * @return The number of minted UAI by `owner`
      */
-    function setMintedVAIOf(address owner, uint amount) external onlyProtocolAllowed returns (uint) {
+    function setMintedUAIOf(address owner, uint amount) external onlyProtocolAllowed returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
-        require(!mintVAIGuardianPaused && !repayVAIGuardianPaused, "VAI is paused");
-        // Check caller is vaiController
-        if (msg.sender != address(vaiController)) {
-            return fail(Error.REJECTION, FailureInfo.SET_MINTED_VAI_REJECTION);
+        require(!mintUAIGuardianPaused && !repayUAIGuardianPaused, "UAI is paused");
+        // Check caller is uaiController
+        if (msg.sender != address(uaiController)) {
+            return fail(Error.REJECTION, FailureInfo.SET_MINTED_UAI_REJECTION);
         }
-        mintedVAIs[owner] = amount;
+        mintedUAIs[owner] = amount;
 
         return uint(Error.NO_ERROR);
     }
 
     /**
-     * @notice Transfer XVS to VAI Vault
+     * @notice Transfer XVS to UAI Vault
      */
     function releaseToVault() public {
         if (releaseStartBlock == 0 || getBlockNumber() < releaseStartBlock) {
@@ -1553,8 +1553,8 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
 
         uint256 actualAmount;
         uint256 deltaBlocks = sub_(getBlockNumber(), releaseStartBlock);
-        // releaseAmount = venusVAIVaultRate * deltaBlocks
-        uint256 _releaseAmount = mul_(venusVAIVaultRate, deltaBlocks);
+        // releaseAmount = venusUAIVaultRate * deltaBlocks
+        uint256 _releaseAmount = mul_(venusUAIVaultRate, deltaBlocks);
 
         if (_releaseAmount < minReleaseAmount) {
             return;
@@ -1568,9 +1568,9 @@ contract ControllerG5 is ControllerV5Storage, ControllerInterfaceG2, ControllerE
 
         releaseStartBlock = getBlockNumber();
 
-        xvs.transfer(vaiVaultAddress, actualAmount);
-        emit DistributedVAIVaultVenus(actualAmount);
+        xvs.transfer(uaiVaultAddress, actualAmount);
+        emit DistributedUAIVaultVenus(actualAmount);
 
-        IVAIVault(vaiVaultAddress).updatePendingRewards();
+        IUAIVault(uaiVaultAddress).updatePendingRewards();
     }
 }

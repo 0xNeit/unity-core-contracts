@@ -18,18 +18,18 @@ interface IVCORE is IVToken {
     function liquidateBorrow(address borrower, IVToken vTokenCollateral) external payable;
 }
 
-interface IVAIController {
-    function liquidateVAI(
+interface IUAIController {
+    function liquidateUAI(
         address borrower,
         uint256 repayAmount,
         IVToken vTokenCollateral
     ) external returns (uint256, uint256);
 
-    function getVAIAddress() external view returns (address);
+    function getUAIAddress() external view returns (address);
 }
 
 interface IController {
     function liquidationIncentiveMantissa() external view returns (uint256);
 
-    function vaiController() external view returns (IVAIController);
+    function uaiController() external view returns (IUAIController);
 }

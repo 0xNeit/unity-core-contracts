@@ -5,7 +5,7 @@ import "../Controller/ControllerG1.sol";
 contract ControllerScenarioG1 is ControllerG1 {
     uint public blockNumber;
     address public xvsAddress;
-    address public vaiAddress;
+    address public uaiAddress;
     /// @notice Supply caps enforced by mintAllowed for each vToken address. Defaults to zero which corresponds to minting notAllowed
     mapping(address => uint) public supplyCaps;
 
@@ -19,12 +19,12 @@ contract ControllerScenarioG1 is ControllerG1 {
         return xvsAddress;
     }
 
-    function setVAIAddress(address vaiAddress_) public {
-        vaiAddress = vaiAddress_;
+    function setUAIAddress(address uaiAddress_) public {
+        uaiAddress = uaiAddress_;
     }
 
-    function getVAIAddress() public view returns (address) {
-        return vaiAddress;
+    function getUAIAddress() public view returns (address) {
+        return uaiAddress;
     }
 
     function membershipLength(VToken vToken) public view returns (uint) {

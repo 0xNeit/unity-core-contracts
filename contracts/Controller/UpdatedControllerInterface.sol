@@ -54,11 +54,11 @@ contract UpdatedControllerInterfaceG1 {
         uint repayAmount
     ) external view returns (uint, uint);
 
-    function setMintedVAIOf(address owner, uint amount) external returns (uint);
+    function setMintedUAIOf(address owner, uint amount) external returns (uint);
 }
 
 contract UpdatedControllerInterfaceG2 is UpdatedControllerInterfaceG1 {
-    function liquidateVAICalculateSeizeTokens(
+    function liquidateUAICalculateSeizeTokens(
         address vTokenCollateral,
         uint repayAmount
     ) external view returns (uint, uint);

@@ -5,7 +5,7 @@ import "../Tokens/VTokens/VToken.sol";
 import "../Utils/ErrorReporter.sol";
 import "../Utils/Exponential.sol";
 import "../Tokens/XVS/XVS.sol";
-import "../Tokens/VAI/VAI.sol";
+import "../Tokens/UAI/UAI.sol";
 import "./ControllerInterface.sol";
 import "./ControllerStorage.sol";
 import "./Unitroller.sol";
@@ -73,14 +73,14 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
         uint venusBorrowIndex
     );
 
-    /// @notice Emitted when XVS is distributed to a VAI minter
-    event DistributedVAIMinterVenus(address indexed vaiMinter, uint venusDelta, uint venusVAIMintIndex);
+    /// @notice Emitted when XVS is distributed to a UAI minter
+    event DistributedUAIMinterVenus(address indexed uaiMinter, uint venusDelta, uint venusUAIMintIndex);
 
-    /// @notice Emitted when VAIController is changed
-    event NewVAIController(VAIControllerInterface oldVAIController, VAIControllerInterface newVAIController);
+    /// @notice Emitted when UAIController is changed
+    event NewUAIController(UAIControllerInterface oldUAIController, UAIControllerInterface newUAIController);
 
-    /// @notice Emitted when VAI mint rate is changed by admin
-    event NewVAIMintRate(uint oldVAIMintRate, uint newVAIMintRate);
+    /// @notice Emitted when UAI mint rate is changed by admin
+    event NewUAIMintRate(uint oldUAIMintRate, uint newUAIMintRate);
 
     /// @notice Emitted when protocol state is changed by admin
     event ActionProtocolPaused(bool state);
@@ -846,12 +846,12 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
             }
         }
 
-        /// @dev VAI Integration^
-        (mErr, vars.sumBorrowPlusEffects) = addUInt(vars.sumBorrowPlusEffects, mintedVAIs[account]);
+        /// @dev UAI Integration^
+        (mErr, vars.sumBorrowPlusEffects) = addUInt(vars.sumBorrowPlusEffects, mintedUAIs[account]);
         if (mErr != MathError.NO_ERROR) {
             return (Error.MATH_ERROR, 0, 0);
         }
-        /// @dev VAI Integration$
+        /// @dev UAI Integration$
 
         // These are safe, as the underflow condition is checked first
         if (vars.sumCollateral > vars.sumBorrowPlusEffects) {
@@ -1154,15 +1154,15 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
         return state;
     }
 
-    function _setMintVAIPaused(bool state) public validPauseState(state) returns (bool) {
-        mintVAIGuardianPaused = state;
-        emit ActionPaused("MintVAI", state);
+    function _setMintUAIPaused(bool state) public validPauseState(state) returns (bool) {
+        mintUAIGuardianPaused = state;
+        emit ActionPaused("MintUAI", state);
         return state;
     }
 
-    function _setRepayVAIPaused(bool state) public validPauseState(state) returns (bool) {
-        repayVAIGuardianPaused = state;
-        emit ActionPaused("RepayVAI", state);
+    function _setRepayUAIPaused(bool state) public validPauseState(state) returns (bool) {
+        repayUAIGuardianPaused = state;
+        emit ActionPaused("RepayUAI", state);
         return state;
     }
 
@@ -1176,30 +1176,30 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Sets a new VAI controller
-     * @dev Admin function to set a new VAI controller
+     * @notice Sets a new UAI controller
+     * @dev Admin function to set a new UAI controller
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setVAIController(VAIControllerInterface vaiController_) external returns (uint) {
+    function _setUAIController(UAIControllerInterface uaiController_) external returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_VAICONTROLLER_OWNER_CHECK);
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_UAICONTROLLER_OWNER_CHECK);
         }
 
-        VAIControllerInterface oldRate = vaiController;
-        vaiController = vaiController_;
-        emit NewVAIController(oldRate, vaiController_);
+        UAIControllerInterface oldRate = uaiController;
+        uaiController = uaiController_;
+        emit NewUAIController(oldRate, uaiController_);
     }
 
-    function _setVAIMintRate(uint newVAIMintRate) external returns (uint) {
+    function _setUAIMintRate(uint newUAIMintRate) external returns (uint) {
         // Check caller is admin
         if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_VAI_MINT_RATE_CHECK);
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_UAI_MINT_RATE_CHECK);
         }
 
-        uint oldVAIMintRate = vaiMintRate;
-        vaiMintRate = newVAIMintRate;
-        emit NewVAIMintRate(oldVAIMintRate, newVAIMintRate);
+        uint oldUAIMintRate = uaiMintRate;
+        uaiMintRate = newUAIMintRate;
+        emit NewUAIMintRate(oldUAIMintRate, newUAIMintRate);
 
         return uint(Error.NO_ERROR);
     }
@@ -1297,11 +1297,11 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Accrue XVS to by updating the VAI minter index
+     * @notice Accrue XVS to by updating the UAI minter index
      */
-    function updateVenusVAIMintIndex() internal {
-        if (address(vaiController) != address(0)) {
-            vaiController.updateVenusVAIMintIndex();
+    function updateVenusUAIMintIndex() internal {
+        if (address(uaiController) != address(0)) {
+            uaiController.updateVenusUAIMintIndex();
         }
     }
 
@@ -1356,26 +1356,26 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Calculate XVS accrued by a VAI minter and possibly transfer it to them
-     * @dev VAI minters will not begin to accrue until after the first interaction with the protocol.
-     * @param vaiMinter The address of the VAI minter to distribute XVS to
+     * @notice Calculate XVS accrued by a UAI minter and possibly transfer it to them
+     * @dev UAI minters will not begin to accrue until after the first interaction with the protocol.
+     * @param uaiMinter The address of the UAI minter to distribute XVS to
      */
-    function distributeVAIMinterVenus(address vaiMinter, bool distributeAll) internal {
-        if (address(vaiController) != address(0)) {
-            uint vaiMinterAccrued;
-            uint vaiMinterDelta;
-            uint vaiMintIndexMantissa;
+    function distributeUAIMinterVenus(address uaiMinter, bool distributeAll) internal {
+        if (address(uaiController) != address(0)) {
+            uint uaiMinterAccrued;
+            uint uaiMinterDelta;
+            uint uaiMintIndexMantissa;
             uint err;
-            (err, vaiMinterAccrued, vaiMinterDelta, vaiMintIndexMantissa) = vaiController.calcDistributeVAIMinterVenus(
-                vaiMinter
+            (err, uaiMinterAccrued, uaiMinterDelta, uaiMintIndexMantissa) = uaiController.calcDistributeUAIMinterVenus(
+                uaiMinter
             );
             if (err == uint(Error.NO_ERROR)) {
-                venusAccrued[vaiMinter] = transferXVS(
-                    vaiMinter,
-                    vaiMinterAccrued,
+                venusAccrued[uaiMinter] = transferXVS(
+                    uaiMinter,
+                    uaiMinterAccrued,
                     distributeAll ? 0 : venusClaimThreshold
                 );
-                emit DistributedVAIMinterVenus(vaiMinter, vaiMinterDelta, vaiMintIndexMantissa);
+                emit DistributedUAIMinterVenus(uaiMinter, uaiMinterDelta, uaiMintIndexMantissa);
             }
         }
     }
@@ -1400,7 +1400,7 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
     }
 
     /**
-     * @notice Claim all the xvs accrued by holder in all markets and VAI
+     * @notice Claim all the xvs accrued by holder in all markets and UAI
      * @param holder The address to claim XVS for
      */
     function claimVenus(address holder) public {
@@ -1427,9 +1427,9 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
      */
     function claimVenus(address[] memory holders, VToken[] memory vTokens, bool borrowers, bool suppliers) public {
         uint j;
-        updateVenusVAIMintIndex();
+        updateVenusUAIMintIndex();
         for (j = 0; j < holders.length; j++) {
-            distributeVAIMinterVenus(holders[j], true);
+            distributeUAIMinterVenus(holders[j], true);
         }
         for (uint i = 0; i < vTokens.length; i++) {
             VToken vToken = vTokens[i];
@@ -1499,10 +1499,10 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
         }
     }
 
-    function _initializeVenusVAIState(uint blockNumber) public {
+    function _initializeVenusUAIState(uint blockNumber) public {
         require(msg.sender == admin, "only admin can");
-        if (address(vaiController) != address(0)) {
-            vaiController._initializeVenusVAIState(blockNumber);
+        if (address(uaiController) != address(0)) {
+            uaiController._initializeVenusUAIState(blockNumber);
         }
     }
 
@@ -1541,65 +1541,65 @@ contract ControllerG2 is ControllerV1Storage, ControllerInterfaceG1, ControllerE
         return 0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63;
     }
 
-    /*** VAI functions ***/
+    /*** UAI functions ***/
 
     /**
-     * @notice Set the minted VAI amount of the `owner`
+     * @notice Set the minted UAI amount of the `owner`
      * @param owner The address of the account to set
-     * @param amount The amount of VAI to set to the account
-     * @return The number of minted VAI by `owner`
+     * @param amount The amount of UAI to set to the account
+     * @return The number of minted UAI by `owner`
      */
-    function setMintedVAIOf(address owner, uint amount) external onlyProtocolAllowed returns (uint) {
+    function setMintedUAIOf(address owner, uint amount) external onlyProtocolAllowed returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
-        require(!mintVAIGuardianPaused && !repayVAIGuardianPaused, "VAI is paused");
-        // Check caller is vaiController
-        if (msg.sender != address(vaiController)) {
-            return fail(Error.REJECTION, FailureInfo.SET_MINTED_VAI_REJECTION);
+        require(!mintUAIGuardianPaused && !repayUAIGuardianPaused, "UAI is paused");
+        // Check caller is uaiController
+        if (msg.sender != address(uaiController)) {
+            return fail(Error.REJECTION, FailureInfo.SET_MINTED_UAI_REJECTION);
         }
-        mintedVAIs[owner] = amount;
+        mintedUAIs[owner] = amount;
 
         return uint(Error.NO_ERROR);
     }
 
     /**
-     * @notice Mint VAI
+     * @notice Mint UAI
      */
-    function mintVAI(uint mintVAIAmount) external onlyProtocolAllowed returns (uint) {
+    function mintUAI(uint mintUAIAmount) external onlyProtocolAllowed returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
-        require(!mintVAIGuardianPaused, "mintVAI is paused");
+        require(!mintUAIGuardianPaused, "mintUAI is paused");
 
         // Keep the flywheel moving
-        updateVenusVAIMintIndex();
-        distributeVAIMinterVenus(msg.sender, false);
-        return vaiController.mintVAI(msg.sender, mintVAIAmount);
+        updateVenusUAIMintIndex();
+        distributeUAIMinterVenus(msg.sender, false);
+        return uaiController.mintUAI(msg.sender, mintUAIAmount);
     }
 
     /**
-     * @notice Repay VAI
+     * @notice Repay UAI
      */
-    function repayVAI(uint repayVAIAmount) external onlyProtocolAllowed returns (uint) {
+    function repayUAI(uint repayUAIAmount) external onlyProtocolAllowed returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
-        require(!repayVAIGuardianPaused, "repayVAI is paused");
+        require(!repayUAIGuardianPaused, "repayUAI is paused");
 
         // Keep the flywheel moving
-        updateVenusVAIMintIndex();
-        distributeVAIMinterVenus(msg.sender, false);
-        return vaiController.repayVAI(msg.sender, repayVAIAmount);
+        updateVenusUAIMintIndex();
+        distributeUAIMinterVenus(msg.sender, false);
+        return uaiController.repayUAI(msg.sender, repayUAIAmount);
     }
 
     /**
-     * @notice Get the minted VAI amount of the `owner`
+     * @notice Get the minted UAI amount of the `owner`
      * @param owner The address of the account to query
-     * @return The number of minted VAI by `owner`
+     * @return The number of minted UAI by `owner`
      */
-    function mintedVAIOf(address owner) external view returns (uint) {
-        return mintedVAIs[owner];
+    function mintedUAIOf(address owner) external view returns (uint) {
+        return mintedUAIs[owner];
     }
 
     /**
-     * @notice Get Mintable VAI amount
+     * @notice Get Mintable UAI amount
      */
-    function getMintableVAI(address minter) external view returns (uint, uint) {
-        return vaiController.getMintableVAI(minter);
+    function getMintableUAI(address minter) external view returns (uint, uint) {
+        return uaiController.getMintableUAI(minter);
     }
 }

@@ -1,11 +1,11 @@
 pragma solidity ^0.5.16;
 
-import "../Tokens/VAI/VAI.sol";
+import "../Tokens/UAI/UAI.sol";
 
-contract VAIScenario is VAI {
+contract UAIScenario is UAI {
     uint internal blockNumber = 100000;
 
-    constructor(uint chainId) public VAI(chainId) {}
+    constructor(uint chainId) public UAI(chainId) {}
 
     function harnessFastForward(uint blocks) public {
         blockNumber += blocks;

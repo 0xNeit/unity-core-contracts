@@ -2,7 +2,7 @@ pragma solidity ^0.5.16;
 
 import { Controller } from "../../Controller/Controller.sol";
 
-contract VAIUnitrollerAdminStorage {
+contract UAIUnitrollerAdminStorage {
     /**
      * @notice Administrator for this contract
      */
@@ -16,35 +16,35 @@ contract VAIUnitrollerAdminStorage {
     /**
      * @notice Active brains of Unitroller
      */
-    address public vaiControllerImplementation;
+    address public uaiControllerImplementation;
 
     /**
      * @notice Pending brains of Unitroller
      */
-    address public pendingVAIControllerImplementation;
+    address public pendingUAIControllerImplementation;
 }
 
-contract VAIControllerStorageG1 is VAIUnitrollerAdminStorage {
+contract UAIControllerStorageG1 is UAIUnitrollerAdminStorage {
     Controller public controller;
 
-    struct VenusVAIState {
-        /// @notice The last updated venusVAIMintIndex
+    struct VenusUAIState {
+        /// @notice The last updated venusUAIMintIndex
         uint224 index;
         /// @notice The block number the index was last updated at
         uint32 block;
     }
 
-    /// @notice The Venus VAI state
-    VenusVAIState public venusVAIState;
+    /// @notice The Venus UAI state
+    VenusUAIState public venusUAIState;
 
-    /// @notice The Venus VAI state initialized
-    bool public isVenusVAIInitialized;
+    /// @notice The Venus UAI state initialized
+    bool public isVenusUAIInitialized;
 
-    /// @notice The Venus VAI minter index as of the last time they accrued XVS
-    mapping(address => uint) public venusVAIMinterIndex;
+    /// @notice The Venus UAI minter index as of the last time they accrued XVS
+    mapping(address => uint) public venusUAIMinterIndex;
 }
 
-contract VAIControllerStorageG2 is VAIControllerStorageG1 {
+contract UAIControllerStorageG2 is UAIControllerStorageG1 {
     /// @notice Treasury Guardian address
     address public treasuryGuardian;
 
@@ -63,22 +63,22 @@ contract VAIControllerStorageG2 is VAIControllerStorageG1 {
     /// @notice The float rate for stability fee
     uint public floatRateMantissa;
 
-    /// @notice The address for VAI interest receiver
+    /// @notice The address for UAI interest receiver
     address public receiver;
 
     /// @notice Accumulator of the total earned interest rate since the opening of the market. For example: 0.6 (60%)
-    uint public vaiMintIndex;
+    uint public uaiMintIndex;
 
     /// @notice Block number that interest was last accrued at
     uint internal accrualBlockNumber;
 
-    /// @notice Global vaiMintIndex as of the most recent balance-changing action for user
-    mapping(address => uint) internal vaiMinterInterestIndex;
+    /// @notice Global uaiMintIndex as of the most recent balance-changing action for user
+    mapping(address => uint) internal uaiMinterInterestIndex;
 
-    /// @notice Tracks the amount of mintedVAI of a user that represents the accrued interest
-    mapping(address => uint) public pastVAIInterest;
+    /// @notice Tracks the amount of mintedUAI of a user that represents the accrued interest
+    mapping(address => uint) public pastUAIInterest;
 
-    /// @notice VAI mint cap
+    /// @notice UAI mint cap
     uint public mintCap;
 
     /// @notice Access control manager address

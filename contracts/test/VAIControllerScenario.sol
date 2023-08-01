@@ -1,21 +1,21 @@
 pragma solidity ^0.5.16;
 
-import "../Tokens/VAI/VAIController.sol";
+import "../Tokens/UAI/UAIController.sol";
 import "./ControllerScenario.sol";
 
-contract VAIControllerScenario is VAIController {
+contract UAIControllerScenario is UAIController {
     uint internal blockNumber;
     address public xvsAddress;
-    address public vaiAddress;
+    address public uaiAddress;
 
-    constructor() public VAIController() {}
+    constructor() public UAIController() {}
 
-    function setVAIAddress(address vaiAddress_) public {
-        vaiAddress = vaiAddress_;
+    function setUAIAddress(address uaiAddress_) public {
+        uaiAddress = uaiAddress_;
     }
 
-    function getVAIAddress() public view returns (address) {
-        return vaiAddress;
+    function getUAIAddress() public view returns (address) {
+        return uaiAddress;
     }
 
     function setBlockNumber(uint number) public {

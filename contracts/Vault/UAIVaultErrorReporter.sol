@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-contract VAIVaultErrorReporter {
+contract UAIVaultErrorReporter {
     enum Error {
         NO_ERROR,
         UNAUTHORIZED
