@@ -82,5 +82,13 @@
     "GovernorBravoDelegate": {
         "1116":"0xd4D414A1372FCB01Fd646219637bb8F6FB217c69",
         "1115":"0xd4D414A1372FCB01Fd646219637bb8F6FB217c69"
+    },
+    "UCOREVesting": {
+        "1116":"0xbFC76442A963E0Fd8B2b9B340b25f6ACC1a48212",
+        "1115":"0xbFC76442A963E0Fd8B2b9B340b25f6ACC1a48212"
+    },
+    "UCOREVestingProxy": {
+        "1116":"0xeF61fb1E75a35Bc38eF9fB8dB96a7d00bcCd806C",
+        "1115":"0xeF61fb1E75a35Bc38eF9fB8dB96a7d00bcCd806C"
     }
 }

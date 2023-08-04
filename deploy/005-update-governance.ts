@@ -31,12 +31,12 @@ const addresses: AddressConfig = {
   bsctestnet: {
     governorProxy: Testnet.GovernorBravoDelegator,
     normalVipTimelock: Testnet.Timelock,
-    xvsVault: Testnet.XVSVaultProxy,
+    ucoreVault: Testnet.UCOREVaultProxy,
   },
   bscmainnet: {
     governorProxy: "0x2d56dC077072B53571b8252008C60e945108c75a",
     normalVipTimelock: Mainnet.Timelock,
-    xvsVault: Mainnet.XVSVaultProxy,
+    ucoreVault: Mainnet.UCOREVaultProxy,
   },
 };
 
@@ -115,7 +115,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       addresses[networkName].governorProxy,
     )) as GovernorBravoDelegate;
     tx = await governorProxy_Impl.initialize(
-      addresses[networkName].xvsVault,
+      addresses[networkName].ucoreVault,
       PROPOSAL_CONFIGS,
       [addresses[networkName].normalVipTimelock, timeLockFastTrack.address, timeLockCritical.address],
       deployer,

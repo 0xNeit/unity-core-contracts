@@ -35,7 +35,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     autoMine: true,
   });
 
-  await deploy("XVSStakingLens", {
+  await deploy("UCOREStakingLens", {
     from: deployer,
     args: [],
     log: true,
