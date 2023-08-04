@@ -1,14 +1,70 @@
 {
     "multicall": {
-        "1116":"",
+        "1116":"0xb2D88103dd6DF8930f98737DF273C74D7bD4d182",
         "1115":"0xb2D88103dd6DF8930f98737DF273C74D7bD4d182"
     },
     "Unitroller": {
-        "1116":"",
+        "1116":"0xE020E0Df54c48B97A3E080Abe0F9C76E4869a84F",
         "1115":"0xE020E0Df54c48B97A3E080Abe0F9C76E4869a84F"
     },
     "Controller": {
-        "1116":"",
+        "1116":"0x002216f54D2c35c8ebdd17Fe7235F8980c157AB6",
         "1115":"0x002216f54D2c35c8ebdd17Fe7235F8980c157AB6"
+    },
+    "UCoreLens": {
+        "1116":"0x498359dD75a1d129FDc3E1f55cc5258920D3ab24",
+        "1115":"0x498359dD75a1d129FDc3E1f55cc5258920D3ab24"
+    },
+    "UCORE": {
+        "1116":"0x821A1C06F2C9aAF9Eb4b80A2A7881ae69595Cb10",
+        "1115":"0x821A1C06F2C9aAF9Eb4b80A2A7881ae69595Cb10"
+    },
+    "UAI": {
+        "1116":"0x2f81F14b63b8598d6Fc21f72be24aD6061E29b58",
+        "1115":"0x2f81F14b63b8598d6Fc21f72be24aD6061E29b58"
+    },
+    "URT": {
+        "1116":"0xd101a592AAd3B38b0546a308d4D761c5d5b1b4F3",
+        "1115":"0xd101a592AAd3B38b0546a308d4D761c5d5b1b4F3"
+    },
+    "JumpRateModel": {
+        "1116":"0x1aefFeb93fb32104A2d8dCe14C910eC4bEea7957",
+        "1115":"0x1aefFeb93fb32104A2d8dCe14C910eC4bEea7957"
+    },
+    "vCORE": {
+        "1116":"0x2F0639a5Eb4baf991EF75deBCc67672fc33686ab",
+        "1115":"0x2F0639a5Eb4baf991EF75deBCc67672fc33686ab"
+    },
+    "UAIVault": {
+        "1116":"0xe5dD7c8dF99457f1022e9d4Ce3F968eA6214E87f",
+        "1115":"0xe5dD7c8dF99457f1022e9d4Ce3F968eA6214E87f"
+    },
+    "UAIVaultProxy": {
+        "1116":"0x1E47c6c475fF4c2A9bbc8fC030fe5084E817F924",
+        "1115":"0x1E47c6c475fF4c2A9bbc8fC030fe5084E817F924"
+    },
+    "UCOREVault": {
+        "1116":"0xDEe88840A86d6Aa6B1b8Da8A09A734941aED53E0",
+        "1115":"0xDEe88840A86d6Aa6B1b8Da8A09A734941aED53E0"
+    },
+    "UCOREVaultProxy": {
+        "1116":"0x56434Fa0A156eCa1CD193e4EB280f715F272bFcb",
+        "1115":"0x56434Fa0A156eCa1CD193e4EB280f715F272bFcb"
+    },
+    "URTVault": {
+        "1116":"0x7da3Bd3A36b78972447469f9E88D7aE77285A1cf",
+        "1115":"0x7da3Bd3A36b78972447469f9E88D7aE77285A1cf"
+    },
+    "URTVaultProxy": {
+        "1116":"0x3F64A6799BF46F39c4483e6621DD0dfD0Ef09347",
+        "1115":"0x3F64A6799BF46F39c4483e6621DD0dfD0Ef09347"
+    },
+    "Maximillion": {
+        "1116":"0x98f4dBC9a5b5CeB8a8c75d71F8a86886323fE1C3",
+        "1115":"0x98f4dBC9a5b5CeB8a8c75d71F8a86886323fE1C3"
+    },
+    "UCOREStore": {
+        "1116":"0x255821508Bdb3afd90C54918486f4f6d6064CDFB",
+        "1115":"0x255821508Bdb3afd90C54918486f4f6d6064CDFB"
     } 
 }

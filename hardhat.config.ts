@@ -1,6 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
+require("dotenv").config();
+
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 const config: HardhatUserConfig = {
@@ -66,7 +68,28 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: "c808613489e847cea9dbc7cca641afab",
+    apiKey: {
+      core: "c808613489e847cea9dbc7cca641afab",
+      core_testnet: "47ef2296e33f44d2a56e0a5df8796ce0"
+    },
+    customChains: [
+      {
+        network: "core",
+        chainId: 1116,
+        urls: {
+          apiURL: "https://openapi.coredao.org/api",
+          browserURL: "https://scan.coredao.org"
+        }
+      },
+      {
+        network: "core_testnet",
+        chainId: 1115,
+        urls: {
+          apiURL: "https://api.test.btcs.network/api",
+          browserURL: "https://scan.test.btcs.network/"
+        }
+      }
+    ]
   },
 };
 
