@@ -90,5 +90,21 @@
     "UCOREVestingProxy": {
         "1116":"0xeF61fb1E75a35Bc38eF9fB8dB96a7d00bcCd806C",
         "1115":"0xeF61fb1E75a35Bc38eF9fB8dB96a7d00bcCd806C"
+    },
+    "URTConverter": {
+        "1116":"0xBe3c4B95aF825e96bffe01Cd7898BE9fD7C88b39",
+        "1115":"0xBe3c4B95aF825e96bffe01Cd7898BE9fD7C88b39"
+    },
+    "TWAPOracleIce": {
+        "1116":"0x49DacC6Fed398866D33F846c16b02aD5F460BA9c",
+        "1115":"0x49DacC6Fed398866D33F846c16b02aD5F460BA9c"
+    },
+    "BoundValidator": {
+        "1116":"0xA2dD5A364f574C3528c02f5C562888cA54975ebb",
+        "1115":"0xA2dD5A364f574C3528c02f5C562888cA54975ebb"
+    },
+    "ResilientOracle": {
+        "1116":"0x78ddFac1f1d799fACA8b70ECfeD0C41322fd323e",
+        "1115":"0x78ddFac1f1d799fACA8b70ECfeD0C41322fd323e"
     }
 }
